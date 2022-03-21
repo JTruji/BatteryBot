@@ -4,9 +4,14 @@ scalaVersion := "2.13.8"
 
 name := "BatteryBot"
 
+val http4sVersion = "0.23.11"
+
 libraryDependencies ++= Seq(
   "com.github.pureconfig" %% "pureconfig" % "0.17.1",
   "org.flywaydb" % "flyway-core" % "8.5.2",
   "org.tpolecat" %% "doobie-core"      % "1.0.0-RC1",
-  "org.tpolecat" %% "doobie-postgres"  % "1.0.0-RC1"
+  "org.tpolecat" %% "doobie-postgres"  % "1.0.0-RC1",
+  "org.http4s" %% "http4s-dsl" % http4sVersion,
+  "org.http4s" %% "http4s-ember-server" % http4sVersion,
+  "org.http4s" %% "http4s-ember-client" % http4sVersion
 )
