@@ -9,6 +9,5 @@ case class DatabaseConfig (
 
 case class Config (
   telegramToken: String,
-  chatId: String,
   database: DatabaseConfig
 )
