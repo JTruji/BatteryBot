@@ -1,5 +1,7 @@
-import DB_Queries.insertPrices
+package database
+
 import cats.effect.IO
+import database.Queries.insertPrices
 import doobie.Transactor
 import doobie.implicits._
 

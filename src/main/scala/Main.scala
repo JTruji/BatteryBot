@@ -1,6 +1,7 @@
 import cats.effect.IO
 import cats.effect.unsafe.implicits.global
 import config.Config
+import database.PersistenceService
 import doobie.Transactor
 import doobie.util.update.Update
 import org.flywaydb.core.Flyway
