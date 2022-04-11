@@ -13,5 +13,6 @@ libraryDependencies ++= Seq(
   "org.tpolecat" %% "doobie-postgres"  % "1.0.0-RC1",
   "org.http4s" %% "http4s-dsl" % http4sVersion,
   "org.http4s" %% "http4s-ember-server" % http4sVersion,
-  "org.http4s" %% "http4s-ember-client" % http4sVersion
+  "org.http4s" %% "http4s-ember-client" % http4sVersion,
+  "org.typelevel" %% "munit-cats-effect-3" % "1.0.7" % Test
 )
