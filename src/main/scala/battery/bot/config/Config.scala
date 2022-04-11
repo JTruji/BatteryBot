@@ -1,4 +1,4 @@
-package config
+package battery.bot.config
 
 case class DatabaseConfig (
   url: String,

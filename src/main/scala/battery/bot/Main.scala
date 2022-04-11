@@ -1,17 +1,18 @@
-import cats.effect.{ExitCode, IO, IOApp}
-import config.Config
-import org.flywaydb.core.Flyway
-import pureconfig._
-import pureconfig.generic.auto._
-import org.http4s.ember.client._
-import org.http4s.client._
+package battery.bot
 
-object Main extends IOApp{
+import battery.bot.config.Config
+import battery.bot.telegram.TelegramClient
+import cats.effect._
+import org.http4s.ember.client.EmberClientBuilder
+import pureconfig.ConfigSource
+import pureconfig.generic.auto._
+
+object Main extends IOApp {
 
   override def run(args: List[String]): IO[ExitCode] = {
 
     val config = ConfigSource.default.loadOrThrow[Config]
-    println (config)
+    println(config)
     println(config.database)
 
 //    Flyway
@@ -20,7 +21,7 @@ object Main extends IOApp{
 //      .load()
 //      .migrate
 
-    val telegramClient= EmberClientBuilder.default[IO].build.map { client =>
+    val telegramClient = EmberClientBuilder.default[IO].build.map { client =>
       new TelegramClient(client, config.telegramToken, "402124312")
     }
 
