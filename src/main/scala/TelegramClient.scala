@@ -6,19 +6,25 @@ class TelegramClient(client: Client[IO], telegramToken: String, chatId: String) 
 
   def callTelegram(): IO[Unit] = {
 
-    client
-      .expect[String](
-        uri"https://api.telegram.org" / s"bot$telegramToken" / "getMe"
-      )
-      .map(hj => println(hj))
+//    client
+//      .expect[String](
+//        uri"https://api.telegram.org" / s"bot$telegramToken" / "getMe"
+//      )
+//      .map(hj => println(hj))
 
     client
-      .expect[String](
-        (uri"https://api.telegram.org" / s"bot$telegramToken" / "sendMessage")
-          .withQueryParam("chat_id", s"$chatId")
-          .withQueryParam("text", "This is an example")
+      .expect[Json](
+        uri"https://api.telegram.org" / s"bot$telegramToken" / "getUpdates"
       )
-      .map(hj => println(hj))
+      .map(hj => println(hj.spaces2))
+
+//    client
+//      .expect[String](
+//        (uri"https://api.telegram.org" / s"bot$telegramToken" / "sendMessage")
+//          .withQueryParam("chat_id", s"$chatId")
+//          .withQueryParam("text", "This is an example")
+//      )
+//      .map(hj => println(hj))
 
   }
 }
