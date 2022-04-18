@@ -5,7 +5,7 @@ import io.circe.generic.extras.semiauto.deriveConfiguredCodec
 
 case class TelegramResult(
     updateId: Long,
-    message: TelegramMessage
+    message: Option[TelegramMessage]
 )
 
 object TelegramResult {

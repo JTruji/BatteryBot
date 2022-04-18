@@ -7,6 +7,7 @@ import org.http4s.QueryParamEncoder
 import org.http4s.circe.CirceEntityCodec._
 import org.http4s.client.Client
 import org.http4s.implicits._
+import shapeless.Lazy.apply
 
 class TelegramClient(client: Client[IO], telegramToken: String) {
 val telegramUri = uri"https://api.telegram.org"

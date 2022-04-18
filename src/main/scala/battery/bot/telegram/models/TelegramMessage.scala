@@ -5,7 +5,7 @@ import io.circe.generic.extras.semiauto.deriveConfiguredCodec
 
 case class TelegramMessage(
     messageId: Long,
-    from: TelegramFrom,
+    from: Option[TelegramFrom],
     chat: TelegramChat,
     text: String
 )

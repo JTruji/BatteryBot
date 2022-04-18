@@ -7,8 +7,8 @@ case class TelegramFrom(
     id: Long,
     isBot: Boolean,
     firstName: String,
-    username: String,
-    languageCode: String
+    username: Option[String],
+    languageCode: Option[String]
 )
 
 object TelegramFrom{
