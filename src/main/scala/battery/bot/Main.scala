@@ -22,7 +22,7 @@ object Main extends IOApp {
 //      .migrate
 
     val telegramClient = EmberClientBuilder.default[IO].build.map { client =>
-      new TelegramClient(client, config.telegramToken, "402124312")
+      new TelegramClient(client, config.telegramToken)
     }
 
     telegramClient.use(_.callTelegram()).as(ExitCode.Success)
