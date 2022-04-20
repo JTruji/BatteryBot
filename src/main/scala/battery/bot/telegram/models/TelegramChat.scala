@@ -1,26 +1,27 @@
 package battery.bot.telegram.models
 
-import io.circe.{Codec, Decoder, Encoder}
-import io.circe.generic.extras.semiauto.deriveConfiguredCodec
-
+import io.circe.{Decoder, Encoder}
 
 case class TelegramChat(
     id: Long,
-    first_name: Option[String],
-    username: Option[String]
+    firstName: Option[String],
+    username: Option[String],
+    chatType: String
 )
 
 object TelegramChat {
-//    implicit val codec: Codec[TelegramChat] = deriveConfiguredCodec[TelegramChat]
-  implicit val encoderTelegramChat: Encoder[TelegramChat] = Encoder.forProduct3(
-    "id",
-    "firstName",
-    "username"
-  )(u => (u.id, u.first_name, u.username))
 
-  implicit val decoderTelegramChat = Decoder.forProduct3(
+  implicit val encoderTelegramChat: Encoder[TelegramChat] = Encoder.forProduct4(
     "id",
     "first_name",
-    "username"
+    "username",
+    "type"
+  )(u => (u.id, u.firstName, u.username, u.chatType))
+
+  implicit val decoderTelegramChat = Decoder.forProduct4(
+    "id",
+    "first_name",
+    "username",
+    "type"
   )(TelegramChat.apply)
 }

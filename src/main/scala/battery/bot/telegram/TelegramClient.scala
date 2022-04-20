@@ -1,13 +1,10 @@
 package battery.bot.telegram
 
-import battery.bot.telegram.models.{TelegramChat, TelegramJSON}
+import battery.bot.telegram.models.TelegramJSON
 import cats.effect.IO
-import io.circe.Json
-import org.http4s.QueryParamEncoder
 import org.http4s.circe.CirceEntityCodec._
 import org.http4s.client.Client
 import org.http4s.implicits._
-import shapeless.Lazy.apply
 
 class TelegramClient(client: Client[IO], telegramToken: String) {
 val telegramUri = uri"https://api.telegram.org"
