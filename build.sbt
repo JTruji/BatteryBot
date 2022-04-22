@@ -14,6 +14,7 @@ libraryDependencies ++= Seq(
   "org.http4s"            %% "http4s-dsl"                      % http4sVersion,
   "org.http4s"            %% "http4s-ember-server"             % http4sVersion,
   "org.http4s"            %% "http4s-ember-client"             % http4sVersion,
+  "org.jsoup" % "jsoup" % "1.14.3",
   "org.typelevel"         %% "munit-cats-effect-3"             % "1.0.7"     % Test,
   "com.dimafeng"          %% "testcontainers-scala-munit"      % "0.40.3"    % Test,
   "com.dimafeng"          %% "testcontainers-scala-postgresql" % "0.40.3"    % Test,
