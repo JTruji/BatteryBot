@@ -49,14 +49,4 @@ val telegramUri = uri"https://api.telegram.org"
       )
       .flatTap(hj => IO(println(hj)))
   }
-
-    //    client
-//      .expect[String](
-//        (telegramUri / s"bot$telegramToken" / "sendMessage")
-////          .withQueryParam("chat_id", s"$chatId")
-//          .withQueryParam("chat_id", id)
-//          .withQueryParam("text", "This is an example")
-//      )
-//      .map(hj => println(hj))
-
 }

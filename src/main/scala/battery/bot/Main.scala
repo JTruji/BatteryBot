@@ -12,8 +12,6 @@ object Main extends IOApp {
   override def run(args: List[String]): IO[ExitCode] = {
 
     val config = ConfigSource.default.loadOrThrow[Config]
-    println(config)
-    println(config.database)
 
 //    Flyway
 //      .configure()
