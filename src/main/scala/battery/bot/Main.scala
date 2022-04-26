@@ -25,6 +25,9 @@ object Main extends IOApp {
       new TelegramClient(client, config.telegramToken)
     }
 
-    telegramClient.use(_.callTelegram()).as(ExitCode.Success)
+    //telegramClient.use(_.telegramGetMe.as(ExitCode.Success))
+    telegramClient.use(_.telegramGetUpdate.as(ExitCode.Success))
+    //telegramClient.use(_.telegramGetMyCommands.as(ExitCode.Success))
+    //telegramClient.use(_.telegramDeleteMyCommands.as(ExitCode.Success))
   }
 }

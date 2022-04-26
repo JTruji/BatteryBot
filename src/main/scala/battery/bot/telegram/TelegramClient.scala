@@ -1,29 +1,56 @@
 package battery.bot.telegram
 
-import battery.bot.telegram.models.TelegramJSON
+import battery.bot.telegram.models.{TelegramBotCommand, TelegramJSON, TelegramResult}
 import cats.effect.IO
+import io.circe.Json
 import org.http4s.circe.CirceEntityCodec._
 import org.http4s.client.Client
 import org.http4s.implicits._
 
 class TelegramClient(client: Client[IO], telegramToken: String) {
 val telegramUri = uri"https://api.telegram.org"
-  def callTelegram(): IO[TelegramJSON] = {
 
-//    client
-//      .expect[String](
-//        telegramUri / s"bot$telegramToken" / "getMe"
-//      )
-//      .map(hj => println(hj))
-
+  def telegramGetMe: IO[TelegramJSON[TelegramResult]] = {
     client
-      .expect[TelegramJSON](
+      .expect[TelegramJSON[TelegramResult]](
+        telegramUri / s"bot$telegramToken" / "getMe"
+      )
+      .flatTap(hj => IO(println(hj)))
+  }
+
+  def telegramGetUpdate: IO[TelegramJSON[TelegramResult]] = {
+    client
+      .expect[TelegramJSON[TelegramResult]](
         telegramUri / s"bot$telegramToken" / "getUpdates"
       )
       .flatTap(hj => IO(println(hj)))
-//      .map(_.result.map(_.message.chat.id))
+  }
 
-//    client
+  def telegramGetMyCommands: IO[TelegramJSON[TelegramBotCommand]] = {
+    client
+      .expect[TelegramJSON[TelegramBotCommand]](
+        telegramUri / s"bot$telegramToken" / "getMyCommands"
+      )
+      .flatTap(hj => IO(println(hj)))
+  }
+
+  def telegramDeleteMyCommands: IO[TelegramJSON[TelegramBotCommand]] = {
+    client
+      .expect[TelegramJSON[TelegramBotCommand]](
+        telegramUri / s"bot$telegramToken" / "deleteMyCommands"
+      )
+      .flatTap(hj => IO(println(hj)))
+  }
+
+  def telegramSetMyCommands: IO[TelegramJSON[TelegramBotCommand]] = {
+    client
+      .expect[TelegramJSON[TelegramBotCommand]](
+        telegramUri / s"bot$telegramToken" / "SetMyCommands"
+      )
+      .flatTap(hj => IO(println(hj)))
+  }
+
+    //    client
 //      .expect[String](
 //        (telegramUri / s"bot$telegramToken" / "sendMessage")
 ////          .withQueryParam("chat_id", s"$chatId")
@@ -31,5 +58,5 @@ val telegramUri = uri"https://api.telegram.org"
 //          .withQueryParam("text", "This is an example")
 //      )
 //      .map(hj => println(hj))
-  }
+
 }
