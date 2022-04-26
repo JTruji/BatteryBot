@@ -1,9 +1,8 @@
 
+import battery.bot.database.PersistenceService
 import cats.effect.IO
 import cats.effect.unsafe.implicits.global
 import cats.effect.{ExitCode, IO, IOApp}
-import config.Config
-import database.PersistenceService
 import doobie.Transactor
 import doobie.util.update.Update
 import org.flywaydb.core.Flyway

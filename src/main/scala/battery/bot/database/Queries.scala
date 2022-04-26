@@ -1,4 +1,4 @@
-package database
+package battery.bot.database
 
 import doobie.implicits._
 import doobie.postgres.implicits._
