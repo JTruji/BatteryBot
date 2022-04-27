@@ -1,23 +1,20 @@
+package battery.bot
 
+import battery.bot.config.Config
 import battery.bot.database.PersistenceService
-import cats.effect.IO
-import cats.effect.unsafe.implicits.global
-import cats.effect.{ExitCode, IO, IOApp}
-import doobie.Transactor
-import doobie.util.update.Update
+import battery.bot.telegram.TelegramClient
+import cats.effect._
+import doobie.util.transactor.Transactor
 import org.flywaydb.core.Flyway
-import pureconfig._
+import org.http4s.ember.client.EmberClientBuilder
+import pureconfig.ConfigSource
 import pureconfig.generic.auto._
-import org.http4s.ember.client._
-import org.http4s.client._
 
-object Main extends IOApp{
+object Main extends IOApp {
 
   override def run(args: List[String]): IO[ExitCode] = {
 
     val config = ConfigSource.default.loadOrThrow[Config]
-  println (config)
-println(config.database)
 
     val ta = Transactor.fromDriverManager[IO](
       config.database.driver,     // driver classname
@@ -27,7 +24,7 @@ println(config.database)
     )
 
     val persistenceService = new PersistenceService(ta)
-    println(persistenceService.addPrice(1,0.123).unsafeRunSync())
+    println(persistenceService.addPrice(1,0.123))
 
     Flyway
       .configure()
@@ -35,10 +32,11 @@ println(config.database)
       .load()
       .migrate
 
-    val telegramClient= EmberClientBuilder.default[IO].build.map { client =>
-      new TelegramClient(client, config.telegramToken, config.chatId)
+    val telegramClient = EmberClientBuilder.default[IO].build.map { client =>
+      new TelegramClient(client, config.telegramToken)
     }
 
-    telegramClient.use(_.callTelegram()).as(ExitCode.Success)
+
+    telegramClient.use(_.telegramGetUpdate.as(ExitCode.Success))
   }
 }
