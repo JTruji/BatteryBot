@@ -10,6 +10,5 @@ case class TelegramJSON[A](
 )
 
 object TelegramJSON{
-  //implicit val codec: Codec[TelegramJSON] = deriveConfiguredCodec[TelegramJSON]
   implicit def codec[A:Codec]: Codec[TelegramJSON[A]] = deriveConfiguredCodec[TelegramJSON[A]]
 }

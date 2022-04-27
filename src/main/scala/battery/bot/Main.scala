@@ -23,21 +23,19 @@ object Main extends IOApp {
     )
 
     val persistenceService = new PersistenceService(ta)
-    println(persistenceService.addPrice(1,0.123).unsafeRunSync())
+    println(persistenceService.addPrice(1,0.123))
 
-//    Flyway
-//      .configure()
-//      .dataSource(config.database.url, config.database.user, config.database.password)
-//      .load()
-//      .migrate
+    Flyway
+      .configure()
+      .dataSource(config.database.url, config.database.user, config.database.password)
+      .load()
+      .migrate
 
     val telegramClient = EmberClientBuilder.default[IO].build.map { client =>
       new TelegramClient(client, config.telegramToken)
     }
 
-    //telegramClient.use(_.telegramGetMe.as(ExitCode.Success))
+
     telegramClient.use(_.telegramGetUpdate.as(ExitCode.Success))
-    //telegramClient.use(_.telegramGetMyCommands.as(ExitCode.Success))
-    //telegramClient.use(_.telegramDeleteMyCommands.as(ExitCode.Success))
   }
 }
