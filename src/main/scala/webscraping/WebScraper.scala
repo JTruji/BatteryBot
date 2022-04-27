@@ -15,7 +15,7 @@ import java.time.LocalDate
     val time= doc.getElementsByAttributeValue("itemprop", "description").text.split(":").toList.map(_.trim).mkString("\n")
     val price = doc.getElementsByAttributeValue("itemprop", "price").text.split("€/kWh").toList.map(_.trim).mkString("\n")
 
-    //println(date)
-    //println(time)
-    //println(price)
+    println(date)
+    println(time)
+    println(price)
   }
