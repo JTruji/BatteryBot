@@ -5,6 +5,7 @@ import battery.bot.database.PersistenceService
 import battery.bot.telegram.TelegramClient
 import cats.effect._
 import doobie.util.transactor.Transactor
+import org.flywaydb.core.Flyway
 import org.http4s.ember.client.EmberClientBuilder
 import pureconfig.ConfigSource
 import pureconfig.generic.auto._
