@@ -5,10 +5,9 @@ import org.jsoup.nodes.Document
 
 import java.time.LocalDate
 
-  object JsoupHtmlToPlainTextTest extends App {
+  object Scraper {
     def scraperTime = {
   val doc: Document = Jsoup.connect("https://tarifaluzhora.es").get
-  val s: String = doc.body.text()
   doc
     .getElementsByAttributeValue("itemprop", "description")
     .text
@@ -19,7 +18,6 @@ import java.time.LocalDate
 }
     def scraperPrice = {
       val doc: Document = Jsoup.connect("https://tarifaluzhora.es").get
-      val s: String = doc.body.text()
       doc.getElementsByAttributeValue("itemprop", "price")
         .text
         .split("€/kWh")
