@@ -1,7 +1,7 @@
-package database
+package battery.bot.database
 
 import cats.effect.IO
-import database.Queries.insertPrices
+import Queries.insertPrices
 import doobie.Transactor
 import doobie.implicits._
 
