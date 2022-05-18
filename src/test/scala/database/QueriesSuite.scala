@@ -1,5 +1,6 @@
 package database
 
+import battery.bot.database.Queries
 import doobie.munit.analysisspec.IOChecker
 
 import java.time.Instant
