@@ -1,6 +1,8 @@
 package battery.bot.database
 
 import java.util.UUID
+import doobie.implicits._
+import doobie.postgres.implicits._
 
 object UsersQueries {
 

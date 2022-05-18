@@ -1,5 +1,7 @@
 package battery.bot.database
 
+import doobie.implicits._
+import doobie.postgres.implicits._
 import java.time.Instant
 
 object PricesQueries {

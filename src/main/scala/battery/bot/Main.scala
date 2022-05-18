@@ -36,7 +36,6 @@ object Main extends IOApp {
       new TelegramClient(client, config.telegramToken)
     }
 
-
     telegramClient.use(_.telegramGetUpdate.as(ExitCode.Success))
   }
 }

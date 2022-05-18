@@ -1,5 +1,6 @@
 package config
 
+import battery.bot.config.Config
 import cats.effect.IO
 import munit.CatsEffectSuite
 import pureconfig.ConfigSource
