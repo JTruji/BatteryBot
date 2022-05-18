@@ -1,7 +1,4 @@
-package database
-
-import doobie.implicits._
-import doobie.postgres.implicits._
+package battery.bot.database
 
 import java.time.Instant
 

@@ -1,6 +1,6 @@
 package database
 
-import battery.bot.database.Queries
+import battery.bot.database.{DevicesQueries, PricesQueries, Queries, UsersQueries}
 import doobie.munit.analysisspec.IOChecker
 
 import java.time.Instant
