@@ -1,4 +1,4 @@
-package webscraping
+package battery.bot.webscraping
 
 import cats.effect.IO
 import org.jsoup.Jsoup
