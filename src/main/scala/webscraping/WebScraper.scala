@@ -1,28 +1,26 @@
 package webscraping
 
+import cats.effect.IO
 import org.jsoup.Jsoup
-import org.jsoup.nodes.Document
 
-import java.time.LocalDate
-
-  object Scraper {
-    def scraperTime = {
-  val doc: Document = Jsoup.connect("https://tarifaluzhora.es").get
-  doc
-    .getElementsByAttributeValue("itemprop", "description")
-    .text
-    .split(":")
-    .toList
-    .map(_.trim)
-    .mkString("\n")
-}
-    def scraperPrice = {
-      val doc: Document = Jsoup.connect("https://tarifaluzhora.es").get
-      doc.getElementsByAttributeValue("itemprop", "price")
-        .text
-        .split("€/kWh")
-        .toList
-        .map(_.trim)
-        .mkString("\n")
-    }
+object Scraper {
+  val doc = Jsoup.connect("https://tarifaluzhora.es")
+  def scraperTime = IO {
+    doc
+      .get()
+      .getElementsByAttributeValue("itemprop", "description")
+      .text
+      .split(":")
+      .toList
+      .map(_.trim)
   }
+  def scraperPrice = IO {
+    doc
+      .get()
+      .getElementsByAttributeValue("itemprop", "price")
+      .text
+      .split("€/kWh")
+      .toList
+      .map(_.trim)
+  }
+}
