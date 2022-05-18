@@ -9,9 +9,8 @@ import java.time.Instant
 
 class PersistenceService(ta: Transactor[IO]) {
 
-  def addPrice(hour: Int, price: BigDecimal) ={
+  def addPrice(hour: Int, price: BigDecimal) =
     insertPrices(Instant.now(), price).run.transact(ta)
-  }
   //insertUsers().run.transact(ta)
 
   //insertDevices().run.transact(ta)
@@ -19,4 +18,3 @@ class PersistenceService(ta: Transactor[IO]) {
   //insertPrices(, 0.123).run.transact(ta)
 
 }
-
