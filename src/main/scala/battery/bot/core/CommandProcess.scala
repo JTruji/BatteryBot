@@ -10,7 +10,7 @@ class CommandProcess {
   def interpreter (results: List[TelegramResult], telegramClient: TelegramClient) = {
     val tbd = results.flatMap(result => result.message.map(message =>(message.chat.id,message.text)))
     tbd.traverse{
-      case (chatId,"/help") => telegramClient.sendMessage(chatId,"ayudado tontito")
+      case (chatId,"/help") => telegramClient.sendMessage(chatId,"WIP")
       case (chatId,message) => telegramClient.sendMessage(chatId,s"No se ha detectado ningún comando: $message")
     }
   }
