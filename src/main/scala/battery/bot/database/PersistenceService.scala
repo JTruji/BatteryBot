@@ -1,4 +1,4 @@
-package database
+package battery.bot.database
 
 import cats.effect.IO
 import battery.bot.database.PricesQueries.insertPrices

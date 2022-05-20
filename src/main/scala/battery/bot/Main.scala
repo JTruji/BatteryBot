@@ -1,9 +1,10 @@
 package battery.bot
 
 import battery.bot.config.Config
-import battery.bot.database.PersistenceService
+import battery.bot.core.CommandProcess
 import battery.bot.telegram.TelegramClient
 import cats.effect._
+import battery.bot.database.PersistenceService
 import doobie.util.transactor.Transactor
 import org.flywaydb.core.Flyway
 import org.http4s.ember.client.EmberClientBuilder
@@ -17,14 +18,13 @@ object Main extends IOApp {
     val config = ConfigSource.default.loadOrThrow[Config]
 
     val ta = Transactor.fromDriverManager[IO](
-      config.database.driver,     // driver classname
+      config.database.driver,  // driver classname
       config.database.url,     // connect URL (driver-specific)
-      config.database.user,                  // user
-      config.database.password               // password
+      config.database.user,    // user
+      config.database.password // password
     )
 
     val persistenceService = new PersistenceService(ta)
-    println(persistenceService.addPrice(1,0.123))
 
     Flyway
       .configure()
@@ -36,6 +36,10 @@ object Main extends IOApp {
       new TelegramClient(client, config.telegramToken)
     }
 
-    telegramClient.use(_.telegramGetUpdate.as(ExitCode.Success))
+    val commandProcess = new CommandProcess
+
+    telegramClient
+      .use(client => client.telegramGetUpdate.flatTap(json => commandProcess.interpreter(json.result, client)))
+      .as(ExitCode.Success)
   }
 }
