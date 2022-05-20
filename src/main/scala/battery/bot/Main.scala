@@ -4,6 +4,7 @@ import battery.bot.config.Config
 import battery.bot.core.CommandProcess
 import battery.bot.telegram.TelegramClient
 import cats.effect._
+import battery.bot.database.PersistenceService
 import doobie.util.transactor.Transactor
 import org.flywaydb.core.Flyway
 import org.http4s.ember.client.EmberClientBuilder
@@ -23,8 +24,7 @@ object Main extends IOApp {
       config.database.password // password
     )
 
-    //val persistenceService = new PersistenceService(ta)
-    //println(persistenceService.addPrice(1,0.123))
+    val persistenceService = new PersistenceService(ta)
 
     Flyway
       .configure()

@@ -9,12 +9,12 @@ import org.http4s.client.Client
 import org.http4s.implicits._
 
 class TelegramClient(client: Client[IO], telegramToken: String) {
-  val telegramUri = uri"https://api.telegram.org"
+  val telegramUri = uri"https://api.telegram.org" / s"bot$telegramToken"
 
   def telegramGetMe: IO[TelegramJSON[TelegramResult]] = {
     client
       .expect[TelegramJSON[TelegramResult]](
-        telegramUri / s"bot$telegramToken" / "getMe"
+        telegramUri  / "getMe"
       )
       .flatTap(hj => IO(println(hj)))
   }
@@ -22,7 +22,7 @@ class TelegramClient(client: Client[IO], telegramToken: String) {
   def telegramGetUpdate: IO[TelegramJSON[TelegramResult]] = {
     client
       .expect[TelegramJSON[TelegramResult]](
-        telegramUri / s"bot$telegramToken" / "getUpdates"
+        telegramUri / "getUpdates"
       )
       .flatTap(hj => IO(println(hj)))
   }
@@ -30,7 +30,7 @@ class TelegramClient(client: Client[IO], telegramToken: String) {
   def telegramGetMyCommands: IO[TelegramJSON[TelegramBotCommand]] = {
     client
       .expect[TelegramJSON[TelegramBotCommand]](
-        telegramUri / s"bot$telegramToken" / "getMyCommands"
+        telegramUri / "getMyCommands"
       )
       .flatTap(hj => IO(println(hj)))
   }
@@ -38,7 +38,7 @@ class TelegramClient(client: Client[IO], telegramToken: String) {
   def telegramDeleteMyCommands: IO[TelegramJSON[TelegramBotCommand]] = {
     client
       .expect[TelegramJSON[TelegramBotCommand]](
-        telegramUri / s"bot$telegramToken" / "deleteMyCommands"
+        telegramUri / "deleteMyCommands"
       )
       .flatTap(hj => IO(println(hj)))
   }
@@ -46,7 +46,7 @@ class TelegramClient(client: Client[IO], telegramToken: String) {
   def telegramSetMyCommands: IO[TelegramJSON[TelegramBotCommand]] = {
     client
       .expect[TelegramJSON[TelegramBotCommand]](
-        telegramUri / s"bot$telegramToken" / "SetMyCommands"
+        telegramUri / "SetMyCommands"
       )
       .flatTap(hj => IO(println(hj)))
   }
@@ -56,7 +56,7 @@ class TelegramClient(client: Client[IO], telegramToken: String) {
       .successful(
         Request[IO](
           method = Method.POST,
-          (telegramUri / s"bot$telegramToken" / "sendMessage")
+          (telegramUri / "sendMessage")
             .withQueryParam("chat_id", chatId.toString)
             .withQueryParam("text", text)
         )
