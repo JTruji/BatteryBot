@@ -3,18 +3,19 @@ package battery.bot.webscraping
 import cats.effect.IO
 import org.jsoup.Jsoup
 
-object Scraper {
+object Scraper extends App {
   val doc = Jsoup.connect("https://tarifaluzhora.es")
-  def scraperTime = IO {
+  def scraperTime = IO{
     doc
       .get()
       .getElementsByAttributeValue("itemprop", "description")
       .text
-      .split(":")
+      .split("h: ")
       .toList
       .map(_.trim)
+      .map(_.take(2))
   }
-  def scraperPrice = IO {
+  def scraperPrice = IO{
     doc
       .get()
       .getElementsByAttributeValue("itemprop", "price")
