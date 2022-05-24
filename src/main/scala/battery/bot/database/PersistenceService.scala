@@ -1,7 +1,6 @@
 package battery.bot.database
 
 import cats.effect.IO
-import battery.bot.database.PricesQueries.insertPrices
 import doobie.Transactor
 import doobie.implicits._
 
@@ -10,9 +9,11 @@ import java.time.Instant
 class PersistenceService(ta: Transactor[IO]) {
 
   def addPrice(hour: Int, price: BigDecimal) ={
-    insertPrices(Instant.now(), price).run.transact(ta)
+    PricesQueries.insertPrices(Instant.now(), price).run.transact(ta)
   }
-  //insertUsers().run.transact(ta)
+  def addScraperPrices(pricesList:List[(Instant,BigDecimal)]): IO[Int] ={
+    PricesQueries.insertManyPrices.updateMany(pricesList).transact(ta)
+  }
 
   //insertDevices().run.transact(ta)
 
