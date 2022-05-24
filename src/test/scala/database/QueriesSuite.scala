@@ -9,7 +9,7 @@ import java.util.UUID
 class QueriesSuite extends PersistenceBaseSuite with IOChecker {
 
   test("Price queries works as expected") {
-    check(PricesQueries.insertPrices(Instant.now(), new BigDecimal(0.12345)))
+    check(PricesQueries.insertManyPrices)
   }
   test("Devices queries works as expected") {
     check(DevicesQueries.insertDevices(UUID.randomUUID(), "patinete", 8.0d));
