@@ -2,16 +2,9 @@ package battery.bot.database
 
 import doobie.implicits._
 import doobie.postgres.implicits._
-import doobie.util.update
 import doobie.util.update.Update
-import doobie._
-import doobie.implicits._
-import doobie.util.ExecutionContexts
-import cats._
-import cats.data._
-import cats.effect._
-import cats.implicits._
 
+import java.math.BigDecimal
 import java.time.Instant
 
 object PricesQueries {

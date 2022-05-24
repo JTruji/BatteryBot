@@ -1,8 +1,7 @@
 package battery.bot.core
 
-import battery.bot.telegram.models.TelegramResult
 import battery.bot.telegram.TelegramClient
-import cats.effect.IO
+import battery.bot.telegram.models.TelegramResult
 import cats.implicits.toTraverseOps
 
 class CommandProcess {

@@ -2,6 +2,7 @@ package battery.bot
 
 import battery.bot.config.Config
 import battery.bot.core.{CommandProcess, ScraperProcess}
+import battery.bot.database.PersistenceService
 import battery.bot.telegram.TelegramClient
 import cats.effect._
 import doobie.util.transactor.Transactor
@@ -23,7 +24,7 @@ object Main extends IOApp {
       config.database.password // password
     )
 
-//    val persistenceService = new PersistenceService(ta)
+    val persistenceService = new PersistenceService(ta)
 
     Flyway
       .configure()
@@ -35,14 +36,19 @@ object Main extends IOApp {
       new TelegramClient(client, config.telegramToken)
     }
 
-    val scraperProcess = new ScraperProcess
-    scraperProcess.getNewPrices
+    val scraperProcess = new ScraperProcess(persistenceService)
 
     val commandProcess = new CommandProcess
 
+    def process(telegramClient: TelegramClient) = {
+      for {
+        _    <- scraperProcess.getNewPrices
+        json <- telegramClient.telegramGetUpdate
+        _    <- commandProcess.interpreter(json.result, telegramClient)
+      } yield ExitCode.Success
+    }
 
-    telegramClient
-      .use(client => client.telegramGetUpdate.flatTap(json => commandProcess.interpreter(json.result, client)))
-      .as(ExitCode.Success)
+    telegramClient.use(process)
   }
+
 }
