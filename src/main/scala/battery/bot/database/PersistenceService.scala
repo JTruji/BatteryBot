@@ -7,10 +7,16 @@ import battery.bot.database.UsersQueries.insertUsers
 import java.time.Instant
 import doobie.Transactor
 import doobie.implicits._
+import java.math.BigDecimal
+import java.time.Instant
 
 import java.util.UUID
 
 class PersistenceService(ta: Transactor[IO]) {
+
+  def addScraperPrices(pricesList:List[(Instant,BigDecimal)]): IO[Int] ={
+      PricesQueries.insertManyPrices.updateMany(pricesList).transact(ta)
+  }
 
   def addPrice(date: Instant, price: BigDecimal): IO[Int] =
     insertPrices(date, price).run.transact(ta)
@@ -21,3 +27,4 @@ class PersistenceService(ta: Transactor[IO]) {
   def addDevice(name: String, chargingTime: Double): IO[Int] =
     insertDevices(UUID.randomUUID(), name, chargingTime).run.transact(ta)
 }
+
