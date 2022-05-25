@@ -1,10 +1,10 @@
 package battery.bot
 
 import battery.bot.config.Config
-import battery.bot.core.CommandProcess
+import battery.bot.core.{CommandProcess, ScraperProcess}
+import battery.bot.database.PersistenceService
 import battery.bot.telegram.TelegramClient
 import cats.effect._
-import battery.bot.database.PersistenceService
 import doobie.util.transactor.Transactor
 import org.flywaydb.core.Flyway
 import org.http4s.ember.client.EmberClientBuilder
@@ -36,10 +36,19 @@ object Main extends IOApp {
       new TelegramClient(client, config.telegramToken)
     }
 
+    val scraperProcess = new ScraperProcess(persistenceService)
+
     val commandProcess = new CommandProcess
 
-    telegramClient
-      .use(client => client.telegramGetUpdate.flatTap(json => commandProcess.interpreter(json.result, client)))
-      .as(ExitCode.Success)
+    def process(telegramClient: TelegramClient) = {
+      for {
+        _    <- scraperProcess.getNewPrices
+        json <- telegramClient.telegramGetUpdate
+        _    <- commandProcess.interpreter(json.result, telegramClient)
+      } yield ExitCode.Success
+    }
+
+    telegramClient.use(process)
   }
+
 }

@@ -2,14 +2,14 @@ package database
 
 import battery.bot.database.{DevicesQueries, PricesQueries, UsersQueries}
 import doobie.munit.analysisspec.IOChecker
-
+import java.math.BigDecimal
 import java.time.Instant
 import java.util.UUID
 
 class QueriesSuite extends PersistenceBaseSuite with IOChecker {
 
   test("Price queries works as expected") {
-    check(PricesQueries.insertPrices(Instant.now(), 0.324))
+    check(PricesQueries.insertManyPrices)
   }
   test("Devices queries works as expected") {
     check(DevicesQueries.insertDevices(UUID.randomUUID(), "patinete", 8.0d));

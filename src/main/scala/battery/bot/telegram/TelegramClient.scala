@@ -1,12 +1,11 @@
 package battery.bot.telegram
 
 import battery.bot.telegram.models.{TelegramBotCommand, TelegramJSON, TelegramResult}
-import cats.effect.{IO, Resource}
-import io.circe.Json
-import org.http4s.{Method, Request, Response}
+import cats.effect.IO
 import org.http4s.circe.CirceEntityCodec._
 import org.http4s.client.Client
 import org.http4s.implicits._
+import org.http4s.{Method, Request}
 
 class TelegramClient(client: Client[IO], telegramToken: String) {
   val telegramUri = uri"https://api.telegram.org" / s"bot$telegramToken"
