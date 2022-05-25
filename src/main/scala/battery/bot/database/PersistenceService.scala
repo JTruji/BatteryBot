@@ -19,8 +19,8 @@ class PersistenceService(ta: Transactor[IO]) {
     insertUsers(UUID.randomUUID(), name, sleepingTime, wakeUpTime, nightCharge).run.transact(ta)
   }
 
-  def addDevice(name: String, chargingTime: Double): IO[Int] = {
-    insertDevices(UUID.randomUUID(), name, chargingTime).run.transact(ta)
+  def addDevice(username:String, name: String, chargingTime: Double): IO[Int] = {
+    insertDevices(UUID.randomUUID(),username, name, chargingTime).run.transact(ta)
   }
 }
 
