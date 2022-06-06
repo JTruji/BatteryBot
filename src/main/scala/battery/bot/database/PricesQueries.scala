@@ -9,6 +9,6 @@ import java.time.Instant
 
 object PricesQueries {
    val insertManyPrices: Update[(Instant, BigDecimal)] =
-    Update[(Instant, BigDecimal)]("insert into prices (time_range, price) values (?, ?)")
+    Update[(Instant, BigDecimal)]("insert into prices (time_range, price) values (?, ?) on conflict do nothing")
 
 }
