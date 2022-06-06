@@ -1,2 +1,2 @@
 alter table devices
-add column username text references users(name);
+add column id_user uuid references users(id_users);
