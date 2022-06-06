@@ -44,7 +44,7 @@ object Main extends IOApp {
       for {
         _    <- scraperProcess.getNewPrices
         json <- telegramClient.telegramGetUpdate
-        _    <- commandProcess.interpreter(json.result, telegramClient)
+        _    <- commandProcess.interpreter(json.result)
       } yield ExitCode.Success
     }
 
