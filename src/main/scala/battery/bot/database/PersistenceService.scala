@@ -24,7 +24,7 @@ class PersistenceService(ta: Transactor[IO]) {
     insertDevices(UUID.randomUUID(),userId, name, chargingTime).run.transact(ta)
   }
 
-  def getUserID(username:String): IO[String] ={
+  def getUserID(username:String): IO[UUID] ={
     getUserUUID(username).transact(ta)
   }
 }
