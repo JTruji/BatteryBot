@@ -60,14 +60,12 @@ class CommandProcess(persistenceService: PersistenceService, telegramClient: Tel
       case (acc, _) => acc
     }
 
-    val chatId =updates.map(_.message.chat.id)
-    val message = updates.map(_.message.text)
+    val telegramMessages =updates.map(up => (up, up.message.text))
 
-    val telegramMessage: (List[Long], List[String]) = (chatId,message)
-
-    telegramMessage.traverse{
-      case (chatId, "/help")  => telegramClient.sendMessage(chatId, "WIP")
-      case (chatId, message)  => telegramClient.sendMessage(chatId, s"No se ha detectado ningún comando: $message")
+    telegramMessages.traverse{
+      case (update, message) if message.startsWith("/start")   => telegramClient.sendMessage(update.message.chat.id, "WIP")
+      case (update, "/help")  => telegramClient.sendMessage(update.message.chat.id, "WIP")
+      case (update, message)  => telegramClient.sendMessage(update.message.chat.id, s"No se ha detectado ningún comando: $message")
     }
   }
 }
