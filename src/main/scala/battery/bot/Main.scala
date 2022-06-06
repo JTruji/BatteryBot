@@ -38,9 +38,8 @@ object Main extends IOApp {
 
     val scraperProcess = new ScraperProcess(persistenceService)
 
-    val commandProcess = new CommandProcess(persistenceService)
-
     def process(telegramClient: TelegramClient) = {
+      val commandProcess = new CommandProcess(persistenceService,telegramClient)
       for {
         _    <- scraperProcess.getNewPrices
         json <- telegramClient.telegramGetUpdate

@@ -24,7 +24,7 @@ class CommandProcess(persistenceService: PersistenceService, telegramClient: Tel
         )
     } yield ()
 
-  def interpreter(results: List[TelegramUpdate]) = {
+  def interpreter(results: List[TelegramUpdate]): IO[List[AnyVal]] = {
 
     //filter invalid messages
 //    if telegramMessage.map(_2.exists(false)) => telegramClient.sendMessage(telegramMessage.map(_._1.message.traverse(_.chat.id)),"Mensaje no válido")
@@ -63,7 +63,7 @@ class CommandProcess(persistenceService: PersistenceService, telegramClient: Tel
     val telegramMessages =updates.map(up => (up, up.message.text))
 
     telegramMessages.traverse{
-      case (update, message) if message.startsWith("/start")   => telegramClient.sendMessage(update.message.chat.id, "WIP")
+      case (update, message) if message.startsWith("/start")   => startCommand(update)
       case (update, "/help")  => telegramClient.sendMessage(update.message.chat.id, "WIP")
       case (update, message)  => telegramClient.sendMessage(update.message.chat.id, s"No se ha detectado ningún comando: $message")
     }

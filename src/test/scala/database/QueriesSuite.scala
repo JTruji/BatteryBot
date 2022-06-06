@@ -12,7 +12,7 @@ class QueriesSuite extends PersistenceBaseSuite with IOChecker {
     check(PricesQueries.insertManyPrices)
   }
   test("Devices queries works as expected") {
-    check(DevicesQueries.insertDevices(UUID.randomUUID(),"Paco", "patinete", 8.0d));
+    check(DevicesQueries.insertDevices(UUID.randomUUID(),UUID.randomUUID(), "patinete", 8.0d));
     check(DevicesQueries.updateChargingTime("patinete", 9.0d))
   }
   test("Users queries works as expected") {
