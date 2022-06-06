@@ -1,2 +1,2 @@
 alter table users
-add unique name;
+add constraint uq_users_name unique(name);
