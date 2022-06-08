@@ -11,8 +11,7 @@ class CommandProcess(persistenceService: PersistenceService, telegramClient: Tel
 
   def startCommand(result:Update): IO[Unit] =
     for {
-      userTelegram <- IO.pure(result.message.from.username)
-      _            <- persistenceService.addUser(userTelegram, 22, 6, false)
+      _            <- persistenceService.addUser(result.message.from.username, 22, 6, false)
       _ <- telegramClient
         .sendMessage(
           result.message.chat.id,
