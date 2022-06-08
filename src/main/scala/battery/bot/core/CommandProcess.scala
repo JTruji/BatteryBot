@@ -11,8 +11,7 @@ class CommandProcess(persistenceService: PersistenceService, telegramClient: Tel
 
   def startCommand(result:Update): IO[Unit] =
     for {
-      userTelegram <- IO.pure(result.message.from.username)
-      _            <- persistenceService.addUser(userTelegram, 22, 6, true)
+      _            <- persistenceService.addUser(result.message.from.username, 22, 6, false)
       _ <- telegramClient
         .sendMessage(
           result.message.chat.id,
@@ -53,7 +52,7 @@ class CommandProcess(persistenceService: PersistenceService, telegramClient: Tel
 
     telegramMessages.traverse{
       case (update, message) if message.startsWith("/start")   => startCommand(update)
-      case (update, message) if message.startsWith("/help") => telegramClient.sendMessage(update.message.chat.id, "WIP")
+      case (update, "/help")  => telegramClient.sendMessage(update.message.chat.id, "WIP")
       case (update, message)  => telegramClient.sendMessage(update.message.chat.id, s"No se ha detectado ningún comando: $message")
     }
   }
