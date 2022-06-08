@@ -9,9 +9,9 @@ import cats.implicits.toTraverseOps
 
 class CommandProcess(persistenceService: PersistenceService, telegramClient: TelegramClient) {
 
-  def startCommand(result:Update): IO[Unit] =
+  def startCommand(result: Update): IO[Unit] =
     for {
-      _            <- persistenceService.addUser(result.message.from.username, 22, 6, false)
+      _ <- persistenceService.addUser(result.message.from.username, 22, 6, false)
       _ <- telegramClient
         .sendMessage(
           result.message.chat.id,
@@ -48,12 +48,13 @@ class CommandProcess(persistenceService: PersistenceService, telegramClient: Tel
       case (acc, _) => acc
     }
 
-    val telegramMessages =updates.map(up => (up, up.message.text))
+    val telegramMessages = updates.map(up => (up, up.message.text))
 
-    telegramMessages.traverse{
-      case (update, message) if message.startsWith("/start")   => startCommand(update)
-      case (update, "/help")  => telegramClient.sendMessage(update.message.chat.id, "WIP")
-      case (update, message)  => telegramClient.sendMessage(update.message.chat.id, s"No se ha detectado ningún comando: $message")
+    telegramMessages.traverse {
+      case (update, message) if message.startsWith("/start") => startCommand(update)
+      case (update, "/help")                                 => telegramClient.sendMessage(update.message.chat.id, "WIP")
+      case (update, message) =>
+        telegramClient.sendMessage(update.message.chat.id, s"No se ha detectado ningún comando: $message")
     }
   }
 }
