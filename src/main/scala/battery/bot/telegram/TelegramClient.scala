@@ -1,6 +1,6 @@
 package battery.bot.telegram
 
-import battery.bot.telegram.models.{TelegramBotCommand, TelegramJSON, TelegramResult}
+import battery.bot.telegram.models.{TelegramBotCommand, TelegramResult, TelegramUpdate}
 import cats.effect.IO
 import org.http4s.circe.CirceEntityCodec._
 import org.http4s.client.Client
@@ -10,41 +10,41 @@ import org.http4s.{Method, Request}
 class TelegramClient(client: Client[IO], telegramToken: String) {
   val telegramUri = uri"https://api.telegram.org" / s"bot$telegramToken"
 
-  def telegramGetMe: IO[TelegramJSON[TelegramResult]] = {
+  def telegramGetMe: IO[TelegramResult[TelegramUpdate]] = {
     client
-      .expect[TelegramJSON[TelegramResult]](
+      .expect[TelegramResult[TelegramUpdate]](
         telegramUri  / "getMe"
       )
       .flatTap(hj => IO(println(hj)))
   }
 
-  def telegramGetUpdate: IO[TelegramJSON[TelegramResult]] = {
+  def telegramGetUpdate: IO[TelegramResult[TelegramUpdate]] = {
     client
-      .expect[TelegramJSON[TelegramResult]](
+      .expect[TelegramResult[TelegramUpdate]](
         telegramUri / "getUpdates"
       )
       .flatTap(hj => IO(println(hj)))
   }
 
-  def telegramGetMyCommands: IO[TelegramJSON[TelegramBotCommand]] = {
+  def telegramGetMyCommands: IO[TelegramResult[TelegramBotCommand]] = {
     client
-      .expect[TelegramJSON[TelegramBotCommand]](
+      .expect[TelegramResult[TelegramBotCommand]](
         telegramUri / "getMyCommands"
       )
       .flatTap(hj => IO(println(hj)))
   }
 
-  def telegramDeleteMyCommands: IO[TelegramJSON[TelegramBotCommand]] = {
+  def telegramDeleteMyCommands: IO[TelegramResult[TelegramBotCommand]] = {
     client
-      .expect[TelegramJSON[TelegramBotCommand]](
+      .expect[TelegramResult[TelegramBotCommand]](
         telegramUri / "deleteMyCommands"
       )
       .flatTap(hj => IO(println(hj)))
   }
 
-  def telegramSetMyCommands: IO[TelegramJSON[TelegramBotCommand]] = {
+  def telegramSetMyCommands: IO[TelegramResult[TelegramBotCommand]] = {
     client
-      .expect[TelegramJSON[TelegramBotCommand]](
+      .expect[TelegramResult[TelegramBotCommand]](
         telegramUri / "SetMyCommands"
       )
       .flatTap(hj => IO(println(hj)))

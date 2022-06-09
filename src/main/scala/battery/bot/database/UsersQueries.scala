@@ -14,7 +14,7 @@ object UsersQueries {
       wakeupTime: Int,
       nightCharge: Boolean
   ): doobie.Update0 =
-    sql"""insert into users (id_users, name, sleeping_time, wakeup_time, night_charge) values ($idUsers, $name, $sleepingTime, $wakeupTime, $nightCharge)""".update
+    sql"""insert into users (id_users, name, sleeping_time, wakeup_time, night_charge) values ($idUsers, $name, $sleepingTime, $wakeupTime, $nightCharge) on conflict do nothing""".update
 
   // Update user data
   def updateSleepingTime(name: String, sleepingTime: Int): doobie.Update0 =
@@ -26,4 +26,7 @@ object UsersQueries {
   def updateNightCharge(name: String, nightCharge: Boolean): doobie.Update0 =
     sql"""update users set night_charge = $nightCharge where name = $name""".update
 
+  // Get user UUID
+def getUserUUID(username:String): doobie.ConnectionIO[UUID] =
+  sql"""select id_users from users where name = $username""".query[UUID].unique
 }
