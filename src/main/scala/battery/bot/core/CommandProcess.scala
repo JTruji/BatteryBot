@@ -19,32 +19,48 @@ class CommandProcess(persistenceService: PersistenceService, telegramClient: Tel
         )
     } yield ()
 
-  def addDeviceCommand(result: Update): IO[Unit] = {
-    val data = result.message.text.split(";").toList
-    data match {
-      case comand :: deviceName :: changingTime :: Nil =>
-        for {
-          userID <- persistenceService.getUserID(result.message.from.username)
-          _      <- persistenceService.addDevice(userID, deviceName, changingTime.toDouble)
-          _ <- telegramClient
-            .sendMessage(
-              result.message.chat.id,
-              "El dispositivo se ha guardado correctamente"
-            )
-        } yield ()
-      case _ =>
-        for {
-          _ <- telegramClient
-            .sendMessage(
-              result.message.chat.id,
-              "El formato del comando no es el adecuado"
-            )
-        } yield ()
+  def deviceRepited(result: Update, deviceExist:Boolean, deviceName: String, chargingTime:Double): IO[Unit] = {
+    if (deviceExist) {
+      for {
+        _ <- telegramClient
+          .sendMessage(
+            result.message.chat.id,
+            "El usuario ya tiene un dispositivo con el mismo nombre, por favor cambielo."
+          )
+      } yield ()
+    } else {
+      for {
+        userID <- persistenceService.getUserID(result.message.from.username)
+        _ <- persistenceService.addDevice(userID, deviceName, chargingTime)
+        _ <- telegramClient
+          .sendMessage(
+            result.message.chat.id,
+            "El dispositivo se ha guardado correctamente."
+          )
+      } yield ()
     }
   }
 
+  def addDeviceCommand(result: Update): IO[Unit] = {
+        val data = result.message.text.split(";").toList
+        data match {
+          case comand :: deviceName :: chargingTime :: Nil =>
+            for {
+              userid <- persistenceService.getUserID(result.message.from.username)
+              userHasDevice <- persistenceService.getDeviceID(userid, deviceName)
+              _ <- deviceRepited(result, userHasDevice, deviceName, chargingTime.toDouble)
+            }yield ()
+          case _ =>
+            for {
+              _ <- telegramClient
+                .sendMessage(
+                  result.message.chat.id,
+                  "El formato del comando no es el adecuado"
+                )
+            } yield ()
+        }
+      }
   def interpreter(results: List[TelegramUpdate]): IO[List[AnyVal]] = {
-
     val updates = results.foldLeft(List.empty[Update]) {
       case (
             acc,
