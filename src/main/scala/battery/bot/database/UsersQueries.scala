@@ -27,6 +27,6 @@ object UsersQueries {
     sql"""update users set night_charge = $nightCharge where name = $name""".update
 
   // Get user UUID
-def getUserUUID(username:String): doobie.ConnectionIO[UUID] =
-  sql"""select id_users from users where name = $username""".query[UUID].unique
+  def getUserUUID(username: String): doobie.ConnectionIO[UUID] =
+    sql"""select id_users from users where name = $username""".query[UUID].unique
 }

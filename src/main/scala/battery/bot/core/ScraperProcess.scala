@@ -9,7 +9,7 @@ class ScraperProcess(persistenceService: PersistenceService) {
   def getNewPrices: IO[Unit] = {
     for {
       list <- Scraper.scraperPrice
-      _ <- persistenceService.addScraperPrices(list)
+      _    <- persistenceService.addScraperPrices(list)
     } yield ()
   }
 }
