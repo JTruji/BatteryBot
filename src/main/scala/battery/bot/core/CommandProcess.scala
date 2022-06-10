@@ -22,10 +22,10 @@ class CommandProcess(persistenceService: PersistenceService, telegramClient: Tel
   def addDeviceCommand(result: Update): IO[Unit] = {
     val data = result.message.text.split(";").toList
     data match {
-      case x :: y :: z :: _ =>
+      case comand :: deviceName :: changingTime :: Nil =>
         for {
           userID <- persistenceService.getUserID(result.message.from.username)
-          _      <- persistenceService.addDevice(userID, y, z.toDouble)
+          _      <- persistenceService.addDevice(userID, deviceName, changingTime.toDouble)
           _ <- telegramClient
             .sendMessage(
               result.message.chat.id,
