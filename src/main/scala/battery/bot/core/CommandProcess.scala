@@ -19,6 +19,28 @@ class CommandProcess(persistenceService: PersistenceService, telegramClient: Tel
         )
     } yield ()
 
+  def addDeviceCommand(result: Update): IO[Unit] = {
+    val data = result.message.text.split(";").toList
+    data match {
+      case x :: y :: z :: _ => for {
+        userID <- persistenceService.getUserID(result.message.from.username)
+        _ <- persistenceService.addDevice(userID, y, z.toDouble)
+        _ <- telegramClient
+          .sendMessage(
+            result.message.chat.id,
+            "El dispositivo se ha guardado correctamente"
+          )
+      } yield ()
+      case _ => for {
+        _<-telegramClient
+        .sendMessage(
+        result.message.chat.id,
+        "El formato del comando no es el adecuado"
+        )
+      }yield ()
+    }
+  }
+
   def interpreter(results: List[TelegramUpdate]): IO[List[AnyVal]] = {
 
     val updates = results.foldLeft(List.empty[Update]) {
@@ -52,8 +74,9 @@ class CommandProcess(persistenceService: PersistenceService, telegramClient: Tel
 
     telegramMessages.traverse {
       case (update, message) if message.startsWith("/start") => startCommand(update)
-      case (update, "/help")                                 => telegramClient.sendMessage(update.message.chat.id, "WIP")
-      case (update, message) =>
+      case (update, message) if message.startsWith("/addDevice") => addDeviceCommand(update)
+      case (update, message) if message.startsWith("/help")  => telegramClient.sendMessage(update.message.chat.id, "WIP")
+      case (update, message) if update.updateId.toInt == 307883230 =>
         telegramClient.sendMessage(update.message.chat.id, s"No se ha detectado ningún comando: $message")
     }
   }
