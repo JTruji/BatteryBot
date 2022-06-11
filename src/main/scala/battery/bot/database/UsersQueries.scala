@@ -35,4 +35,6 @@ object UsersQueries {
       .query[(String, String, Boolean)]
       .unique
 
+  def getUserUUID(username: String): doobie.Query0[UUID] =
+    sql"""select id_users from users where name = $username""".query[UUID]
 }
