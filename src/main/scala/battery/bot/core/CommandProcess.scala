@@ -6,7 +6,6 @@ import battery.bot.telegram.TelegramClient
 import battery.bot.telegram.models.{TelegramChat, TelegramFrom, TelegramMessage, TelegramUpdate}
 import cats.effect.IO
 import cats.implicits.toTraverseOps
-import pureconfig.ConfigReader.Result
 
 class CommandProcess(persistenceService: PersistenceService, telegramClient: TelegramClient) {
 
@@ -62,7 +61,7 @@ class CommandProcess(persistenceService: PersistenceService, telegramClient: Tel
     }
   }
 
-  def sendSettings(sleepingTime: String, wakeUpTime: String, nightCharge: Boolean, result: Update): IO[Unit] = {
+  def sendSettings(sleepingTime: Int, wakeUpTime: Int, nightCharge: Boolean, result: Update): IO[Unit] = {
     if (nightCharge) {
       for {
         _ <- telegramClient

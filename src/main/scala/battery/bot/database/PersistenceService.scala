@@ -27,6 +27,6 @@ class PersistenceService(ta: Transactor[IO]) {
   def getDeviceID(userName: UUID, deviceName: String): IO[Boolean] =
     getDeviceUUID(userName, deviceName).transact(ta)
 
-  def getUserSetting(userName: String): IO[(String, String, Boolean)] =
+  def getUserSetting(userName: String): IO[(Int, Int, Boolean)] =
     getSettings(userName).unique.transact(ta)
 }

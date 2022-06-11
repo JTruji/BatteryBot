@@ -30,8 +30,8 @@ object UsersQueries {
   def getUserUUID(username: String): doobie.Query0[UUID] =
     sql"""select id_users from users where name = $username""".query[UUID]
 
-  def getSettings(username: String): doobie.Query0[(String, String, Boolean)] =
+  def getSettings(username: String): doobie.Query0[(Int, Int, Boolean)] =
     sql"""select sleeping_time, wakeup_time, night_charge from users where name = $username"""
-      .query[(String, String, Boolean)]
+      .query[(Int, Int, Boolean)]
 
 }
