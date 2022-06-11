@@ -89,6 +89,31 @@ class CommandProcess(persistenceService: PersistenceService, telegramClient: Tel
     } yield ()
   }
 
+  def updateSettings(result: Update): IO[Unit] = {
+    val data = result.message.text.split(";").toList
+    data match {
+      case comand :: sleepingTime :: wakeUpTime :: nightCharge :: Nil =>
+        for {
+          _      <- persistenceService.updateUserSleepingTime(result.message.from.username, sleepingTime.toInt)
+          _      <- persistenceService.updateUserwakeupTime(result.message.from.username, wakeUpTime.toInt)
+          _      <- persistenceService.updateUsernightCharge(result.message.from.username, nightCharge.toBoolean)
+          _ <- telegramClient
+            .sendMessage(
+              result.message.chat.id,
+              "El usuario ha sido actualizado"
+            )
+        } yield ()
+      case _ =>
+        for {
+          _ <- telegramClient
+            .sendMessage(
+              result.message.chat.id,
+              "El formato del comando no es el adecuado"
+            )
+        } yield ()
+    }
+  }
+
   def interpreter(results: List[TelegramUpdate]): IO[List[AnyVal]] = {
     val updates = results.foldLeft(List.empty[Update]) {
       case (
@@ -120,10 +145,11 @@ class CommandProcess(persistenceService: PersistenceService, telegramClient: Tel
     val telegramMessages = updates.map(up => (up, up.message.text))
 
     telegramMessages.traverse {
-      case (update, message) if message.startsWith("/start")            => startCommand(update)
-      case (update, message) if message.startsWith("/addDevice")        => addDeviceCommand(update)
-      case (update, message) if message.startsWith("/verConfiguracion") => checkSettings(update)
-      case (update, message) if message.startsWith("/help")             => telegramClient.sendMessage(update.message.chat.id, "WIP")
+      case (update, message) if message.startsWith("/start")               => startCommand(update)
+      case (update, message) if message.startsWith("/addDevice")           => addDeviceCommand(update)
+      case (update, message) if message.startsWith("/verConfiguracion")    => checkSettings(update)
+      case (update, message) if message.startsWith("/editarConfiguracion") => updateSettings(update)
+      case (update, message) if message.startsWith("/help")                => telegramClient.sendMessage(update.message.chat.id, "WIP")
       case (update, message) =>
         telegramClient.sendMessage(update.message.chat.id, s"No se ha detectado ningún comando: $message")
     }
