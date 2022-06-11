@@ -29,4 +29,10 @@ object UsersQueries {
   // Get user UUID
   def getUserUUID(username: String): doobie.ConnectionIO[UUID] =
     sql"""select id_users from users where name = $username""".query[UUID].unique
+
+  def getSettings(username: String): doobie.ConnectionIO[(String, String, Boolean)] =
+    sql"""select sleeping_time, wakeup_time, night_charge from users where name = $username"""
+      .query[(String, String, Boolean)]
+      .unique
+
 }
