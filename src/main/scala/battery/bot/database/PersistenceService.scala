@@ -1,9 +1,7 @@
 package battery.bot.database
 
 import battery.bot.database.DevicesQueries.{existDeviceUUID, insertDevices}
-import battery.bot.database.UsersQueries.{getUserUUID, insertUsers}
-import battery.bot.database.DevicesQueries.{getDeviceUUID, insertDevices}
-import battery.bot.database.UsersQueries.{getSettings, getUserUUID, insertUsers}
+import battery.bot.database.UsersQueries._
 import cats.effect.IO
 import doobie.Transactor
 import doobie.implicits._
