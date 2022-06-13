@@ -22,5 +22,6 @@ class QueriesSuite extends PersistenceBaseSuite with IOChecker {
     check(UsersQueries.updateWakeUpTime("user01", 10))
     check(UsersQueries.updateNightCharge("user01", true))
     check(UsersQueries.getUserUUID("user01"))
+    check(UsersQueries.getSettings("user01"))
   }
 }

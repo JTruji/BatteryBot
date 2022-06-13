@@ -6,7 +6,6 @@ import battery.bot.telegram.TelegramClient
 import battery.bot.telegram.models.{TelegramChat, TelegramFrom, TelegramMessage, TelegramUpdate}
 import cats.effect.IO
 import cats.implicits.toTraverseOps
-import pureconfig.ConfigReader.Result
 
 class CommandProcess(persistenceService: PersistenceService, telegramClient: TelegramClient) {
 
@@ -60,30 +59,29 @@ class CommandProcess(persistenceService: PersistenceService, telegramClient: Tel
     }
   }
 
-  def sendSettings(sleepingTime: String, wakeUpTime: String, nightCharge: Boolean, result: Update): IO[Unit] = {
+  def sendSettings(sleepingTime: Int, wakeUpTime: Int, nightCharge: Boolean, result: Update): IO[Unit] = {
     if (nightCharge) {
-      for {
-        _ <- telegramClient
-          .sendMessage(
-            result.message.chat.id,
-            s"El usuario se levanta a las $sleepingTime, se acuesta a las $wakeUpTime y permite cargar durante la noche"
-          )
-      } yield ()
+      telegramClient
+        .sendMessage(
+          result.message.chat.id,
+          s"El usuario se levanta a las $sleepingTime, se acuesta a las $wakeUpTime y permite cargar durante la noche"
+        )
+        .void
+
     } else {
-      for {
-        _ <- telegramClient
-          .sendMessage(
-            result.message.chat.id,
-            s"El usuario se levanta a las $sleepingTime, se acuesta a las $wakeUpTime y no permite cargar durante la noche"
-          )
-      } yield ()
+      telegramClient
+        .sendMessage(
+          result.message.chat.id,
+          s"El usuario se levanta a las $sleepingTime, se acuesta a las $wakeUpTime y no permite cargar durante la noche"
+        )
+        .void
     }
   }
 
   def checkSettings(result: Update): IO[Unit] = {
     for {
       settingsList <- persistenceService.getUserSetting(result.message.from.username)
-      _            <- sendSettings(settingsList._1, settingsList._2, settingsList._3, result)
+      _            <- sendSettings(settingsList.sleepingTime, settingsList.wakeUpTime, settingsList.nightCharge, result)
     } yield ()
   }
 

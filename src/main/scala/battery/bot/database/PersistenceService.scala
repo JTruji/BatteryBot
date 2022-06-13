@@ -1,7 +1,12 @@
 package battery.bot.database
 
+<<<<<<<<< Temporary merge branch 1
+import battery.bot.database.DevicesQueries.{getDeviceUUID, insertDevices}
+import battery.bot.database.UsersQueries.{getSettings, getUserUUID, insertUsers}
+=========
 import battery.bot.database.DevicesQueries.{existDeviceUUID, insertDevices}
-import battery.bot.database.UsersQueries._
+import battery.bot.database.UsersQueries.{getUserUUID, insertUsers}
+>>>>>>>>> Temporary merge branch 2
 import cats.effect.IO
 import doobie.Transactor
 import doobie.implicits._
@@ -36,6 +41,6 @@ class PersistenceService(ta: Transactor[IO]) {
   def existDeviceID(userName: UUID, deviceName: String): IO[Boolean] =
     existDeviceUUID(userName, deviceName).unique.transact(ta)
 
-  def getUserSetting(userName: String): IO[(String, String, Boolean)] =
+  def getUserSetting(userName: String): IO[UserSettings] =
     getSettings(userName).unique.transact(ta)
 }
