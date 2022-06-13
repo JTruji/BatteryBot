@@ -47,7 +47,7 @@ class CommandProcess(persistenceService: PersistenceService, telegramClient: Tel
       case comand :: deviceName :: chargingTime :: Nil =>
         for {
           userid        <- persistenceService.getUserID(result.message.from.username)
-          userHasDevice <- persistenceService.getDeviceID(userid, deviceName)
+          userHasDevice <- persistenceService.existDeviceID(userid, deviceName)
           _             <- deviceRepited(result, userHasDevice, deviceName, chargingTime.toDouble)
         } yield ()
       case _ =>
