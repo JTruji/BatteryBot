@@ -24,10 +24,10 @@ class PersistenceService(ta: Transactor[IO]) {
   def updateUserSleepingTime(name: String, sleepingTime: Int): IO[Int] =
     updateSleepingTime(name, sleepingTime).run.transact(ta)
 
-  def updateUserwakeupTime(name: String, wakeupTime: Int): IO[Int] =
+  def updateUserWakeUpTime(name: String, wakeupTime: Int): IO[Int] =
     updateWakeUpTime(name, wakeupTime).run.transact(ta)
 
-  def updateUsernightCharge(name: String, nightCharge: Boolean): IO[Int] =
+  def updateUserNightCharge(name: String, nightCharge: Boolean): IO[Int] =
     updateNightCharge(name, nightCharge).run.transact(ta)
 
   def getUserID(username: String): IO[UUID] =
