@@ -90,9 +90,12 @@ class CommandProcess(persistenceService: PersistenceService, telegramClient: Tel
     data match {
       case _ :: sleepingTime :: wakeUpTime :: nightCharge :: Nil =>
         for {
-          _      <- persistenceService.updateUserSleepingTime(result.message.from.username, sleepingTime.toInt)
-          _      <- persistenceService.updateUserWakeUpTime(result.message.from.username, wakeUpTime.toInt)
-          _      <- persistenceService.updateUserNightCharge(result.message.from.username, nightCharge.toBoolean)
+          _ <- persistenceService.updateUserSettings(
+            result.message.from.username,
+            sleepingTime.toInt,
+            wakeUpTime.toInt,
+            nightCharge.toBoolean
+          )
           _ <- telegramClient
             .sendMessage(
               result.message.chat.id,

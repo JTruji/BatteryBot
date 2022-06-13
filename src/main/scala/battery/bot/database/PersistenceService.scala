@@ -1,12 +1,8 @@
 package battery.bot.database
 
-<<<<<<<<< Temporary merge branch 1
-import battery.bot.database.DevicesQueries.{getDeviceUUID, insertDevices}
-import battery.bot.database.UsersQueries.{getSettings, getUserUUID, insertUsers}
-=========
-import battery.bot.database.DevicesQueries.{existDeviceUUID, insertDevices}
-import battery.bot.database.UsersQueries.{getUserUUID, insertUsers}
->>>>>>>>> Temporary merge branch 2
+import battery.bot.core.models.UserSettings
+import battery.bot.database.DevicesQueries._
+import battery.bot.database.UsersQueries._
 import cats.effect.IO
 import doobie.Transactor
 import doobie.implicits._
@@ -26,14 +22,8 @@ class PersistenceService(ta: Transactor[IO]) {
   def addDevice(userId: UUID, name: String, chargingTime: Double): IO[Int] =
     insertDevices(UUID.randomUUID(), userId, name, chargingTime).run.transact(ta)
 
-  def updateUserSleepingTime(name: String, sleepingTime: Int): IO[Int] =
-    updateSleepingTime(name, sleepingTime).run.transact(ta)
-
-  def updateUserWakeUpTime(name: String, wakeupTime: Int): IO[Int] =
-    updateWakeUpTime(name, wakeupTime).run.transact(ta)
-
-  def updateUserNightCharge(name: String, nightCharge: Boolean): IO[Int] =
-    updateNightCharge(name, nightCharge).run.transact(ta)
+  def updateUserSettings(name: String, sleepingTime: Int, wakeupTime: Int, nightCharge: Boolean): IO[Int] =
+    updateSettings(name, sleepingTime, wakeupTime, nightCharge).run.transact(ta)
 
   def getUserID(username: String): IO[UUID] =
     getUserUUID(username).unique.transact(ta)
