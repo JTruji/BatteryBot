@@ -1,9 +1,14 @@
 package battery.bot.database
 
-import battery.bot.database.DevicesQueries.{getDeviceUUID, insertDevices}
-import battery.bot.database.UsersQueries.{getSettings, getUserUUID, insertUsers, updateNightCharge, updateSleepingTime, updateWakeUpTime}
 import battery.bot.database.DevicesQueries.{existDeviceUUID, insertDevices}
-import battery.bot.database.UsersQueries.{getUserUUID, insertUsers}
+import battery.bot.database.UsersQueries.{
+  getSettings,
+  getUserUUID,
+  insertUsers,
+  updateNightCharge,
+  updateSleepingTime,
+  updateWakeUpTime
+}
 import cats.effect.IO
 import doobie.Transactor
 import doobie.implicits._
@@ -33,11 +38,11 @@ class PersistenceService(ta: Transactor[IO]) {
     updateNightCharge(name, nightCharge).run.transact(ta)
 
   def getUserID(username: String): IO[UUID] =
-    getUserUUID(username).transact(ta)
+    getUserUUID(username).unique.transact(ta)
 
   def existDeviceID(userName: UUID, deviceName: String): IO[Boolean] =
     existDeviceUUID(userName, deviceName).unique.transact(ta)
 
   def getUserSetting(userName: String): IO[(String, String, Boolean)] =
-    getSettings(userName).transact(ta)
+    getSettings(userName).unique.transact(ta)
 }

@@ -27,12 +27,11 @@ object UsersQueries {
     sql"""update users set night_charge = $nightCharge where name = $name""".update
 
   // Get user UUID
-  def getUserUUID(username: String): doobie.ConnectionIO[UUID] =
-    sql"""select id_users from users where name = $username""".query[UUID].unique
+  def getUserUUID(username: String): doobie.Query0[UUID] =
+    sql"""select id_users from users where name = $username""".query[UUID]
 
-  def getSettings(username: String): doobie.ConnectionIO[(String, String, Boolean)] =
+  def getSettings(username: String): doobie.Query0[(String, String, Boolean)] =
     sql"""select sleeping_time, wakeup_time, night_charge from users where name = $username"""
       .query[(String, String, Boolean)]
-      .unique
 
 }
