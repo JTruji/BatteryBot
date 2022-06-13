@@ -1,14 +1,7 @@
 package battery.bot.database
 
 import battery.bot.database.DevicesQueries.{existDeviceUUID, insertDevices}
-import battery.bot.database.UsersQueries.{
-  getSettings,
-  getUserUUID,
-  insertUsers,
-  updateNightCharge,
-  updateSleepingTime,
-  updateWakeUpTime
-}
+import battery.bot.database.UsersQueries._
 import cats.effect.IO
 import doobie.Transactor
 import doobie.implicits._
