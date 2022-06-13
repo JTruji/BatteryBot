@@ -14,7 +14,7 @@ object UsersQueries {
       wakeupTime: Int,
       nightCharge: Boolean
   ): doobie.Update0 =
-    sql"""insert into users (id_users, name, sleeping_time, wakeup_time, night_charge) values ($idUsers, $name, $sleepingTime, $wakeupTime, $nightCharge) on conflict do nothing""".update
+    sql"""insert into users (id_users, name, sleeping_time, wakeup_time, night_charge) values ($idUsers, $name, $sleepingTime, $wakeupTime, $nightCharge)""".update
 
   // Update user data
   def updateSleepingTime(name: String, sleepingTime: Int): doobie.Update0 =

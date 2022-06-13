@@ -20,15 +20,14 @@ class CommandProcess(persistenceService: PersistenceService, telegramClient: Tel
         )
     } yield ()
 
-  def deviceRepited(result: Update, deviceExist: Boolean, deviceName: String, chargingTime: Double): IO[Unit] = {
+  def deviceRepeated(result: Update, deviceExist: Boolean, deviceName: String, chargingTime: Double): IO[Unit] = {
     if (deviceExist) {
-      for {
-        _ <- telegramClient
-          .sendMessage(
-            result.message.chat.id,
-            "El usuario ya tiene un dispositivo con el mismo nombre, por favor introduzca un nombre diferente."
-          )
-      } yield ()
+      telegramClient
+        .sendMessage(
+          result.message.chat.id,
+          "El usuario ya tiene un dispositivo con el mismo nombre, por favor introduzca un nombre diferente."
+        )
+        .void
     } else {
       for {
         userID <- persistenceService.getUserID(result.message.from.username)
@@ -45,20 +44,19 @@ class CommandProcess(persistenceService: PersistenceService, telegramClient: Tel
   def addDeviceCommand(result: Update): IO[Unit] = {
     val data = result.message.text.split(";").toList
     data match {
-      case comand :: deviceName :: chargingTime :: Nil =>
+      case _ :: deviceName :: chargingTime :: Nil =>
         for {
           userid        <- persistenceService.getUserID(result.message.from.username)
-          userHasDevice <- persistenceService.getDeviceID(userid, deviceName)
-          _             <- deviceRepited(result, userHasDevice, deviceName, chargingTime.toDouble)
+          userHasDevice <- persistenceService.existDeviceID(userid, deviceName)
+          _             <- deviceRepeated(result, userHasDevice, deviceName, chargingTime.toDouble)
         } yield ()
       case _ =>
-        for {
-          _ <- telegramClient
-            .sendMessage(
-              result.message.chat.id,
-              "El formato del comando no es el adecuado"
-            )
-        } yield ()
+        telegramClient
+          .sendMessage(
+            result.message.chat.id,
+            "El formato del comando no es el adecuado"
+          )
+          .void
     }
   }
 
@@ -123,7 +121,7 @@ class CommandProcess(persistenceService: PersistenceService, telegramClient: Tel
               Some(
                 TelegramMessage(
                   messageId,
-                  Some(TelegramFrom(fromId, isBot, fromFirstName, Some(fromUsername), Some(languageCode))),
+                  Some(TelegramFrom(fromId, isBot, fromFirstName, Some(fromUsername), Some(_))),
                   TelegramChat(chatId, Some(chatFirstName), Some(chatUsername), chatType),
                   text
                 )
