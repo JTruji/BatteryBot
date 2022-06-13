@@ -88,7 +88,7 @@ class CommandProcess(persistenceService: PersistenceService, telegramClient: Tel
   def updateSettings(result: Update): IO[Unit] = {
     val data = result.message.text.split(";").toList
     data match {
-      case comand :: sleepingTime :: wakeUpTime :: nightCharge :: Nil =>
+      case _ :: sleepingTime :: wakeUpTime :: nightCharge :: Nil =>
         for {
           _      <- persistenceService.updateUserSleepingTime(result.message.from.username, sleepingTime.toInt)
           _      <- persistenceService.updateUserWakeUpTime(result.message.from.username, wakeUpTime.toInt)
