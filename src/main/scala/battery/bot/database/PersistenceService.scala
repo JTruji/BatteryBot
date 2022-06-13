@@ -1,5 +1,6 @@
 package battery.bot.database
 
+import battery.bot.core.models.UserSettings
 import battery.bot.database.DevicesQueries.{existDeviceUUID, insertDevices}
 import battery.bot.database.UsersQueries._
 import cats.effect.IO
@@ -27,6 +28,6 @@ class PersistenceService(ta: Transactor[IO]) {
   def existDeviceID(userName: UUID, deviceName: String): IO[Boolean] =
     existDeviceUUID(userName, deviceName).unique.transact(ta)
 
-  def getUserSetting(userName: String): IO[(Int, Int, Boolean)] =
+  def getUserSetting(userName: String): IO[UserSettings] =
     getSettings(userName).unique.transact(ta)
 }

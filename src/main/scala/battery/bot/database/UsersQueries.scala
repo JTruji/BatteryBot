@@ -1,5 +1,7 @@
 package battery.bot.database
 
+import battery.bot.core.models.UserSettings
+
 import java.util.UUID
 import doobie.implicits._
 import doobie.postgres.implicits._
@@ -30,8 +32,8 @@ object UsersQueries {
   def getUserUUID(username: String): doobie.Query0[UUID] =
     sql"""select id_users from users where name = $username""".query[UUID]
 
-  def getSettings(username: String): doobie.Query0[(Int, Int, Boolean)] =
+  def getSettings(username: String): doobie.Query0[UserSettings] =
     sql"""select sleeping_time, wakeup_time, night_charge from users where name = $username"""
-      .query[(Int, Int, Boolean)]
+      .query[UserSettings]
 
 }

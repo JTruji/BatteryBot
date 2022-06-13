@@ -81,7 +81,7 @@ class CommandProcess(persistenceService: PersistenceService, telegramClient: Tel
   def checkSettings(result: Update): IO[Unit] = {
     for {
       settingsList <- persistenceService.getUserSetting(result.message.from.username)
-      _            <- sendSettings(settingsList._1, settingsList._2, settingsList._3, result)
+      _            <- sendSettings(settingsList.sleepingTime, settingsList.wakeUpTime, settingsList.nightCharge, result)
     } yield ()
   }
 
