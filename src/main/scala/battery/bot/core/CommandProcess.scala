@@ -61,21 +61,20 @@ class CommandProcess(persistenceService: PersistenceService, telegramClient: Tel
 
   def sendSettings(sleepingTime: Int, wakeUpTime: Int, nightCharge: Boolean, result: Update): IO[Unit] = {
     if (nightCharge) {
-      for {
-        _ <- telegramClient
-          .sendMessage(
-            result.message.chat.id,
-            s"El usuario se levanta a las $sleepingTime, se acuesta a las $wakeUpTime y permite cargar durante la noche"
-          )
-      } yield ()
+      telegramClient
+        .sendMessage(
+          result.message.chat.id,
+          s"El usuario se levanta a las $sleepingTime, se acuesta a las $wakeUpTime y permite cargar durante la noche"
+        )
+        .void
+
     } else {
-      for {
-        _ <- telegramClient
-          .sendMessage(
-            result.message.chat.id,
-            s"El usuario se levanta a las $sleepingTime, se acuesta a las $wakeUpTime y no permite cargar durante la noche"
-          )
-      } yield ()
+      telegramClient
+        .sendMessage(
+          result.message.chat.id,
+          s"El usuario se levanta a las $sleepingTime, se acuesta a las $wakeUpTime y no permite cargar durante la noche"
+        )
+        .void
     }
   }
 
