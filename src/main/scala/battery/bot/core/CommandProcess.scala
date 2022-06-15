@@ -58,6 +58,7 @@ class CommandProcess(persistenceService: PersistenceService, telegramClient: Tel
           .void
     }
   }
+  
   def interpreter(results: List[TelegramUpdate]): IO[List[AnyVal]] = {
     val updates = results.foldLeft(List.empty[Update]) {
       case (
