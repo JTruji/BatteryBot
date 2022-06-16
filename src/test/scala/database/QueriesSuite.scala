@@ -18,9 +18,7 @@ class QueriesSuite extends PersistenceBaseSuite with IOChecker {
   }
   test("Users queries works as expected") {
     check(UsersQueries.insertUsers(UUID.randomUUID(), "user01", 22, 9, false))
-    check(UsersQueries.updateSleepingTime("user01", 23))
-    check(UsersQueries.updateWakeUpTime("user01", 10))
-    check(UsersQueries.updateNightCharge("user01", true))
+    check(UsersQueries.updateSettings("user01", 23, 10, true))
     check(UsersQueries.getUserUUID("user01"))
     check(UsersQueries.getSettings("user01"))
   }

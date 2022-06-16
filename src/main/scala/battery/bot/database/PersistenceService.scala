@@ -1,7 +1,7 @@
 package battery.bot.database
 
 import battery.bot.core.models.UserSettings
-import battery.bot.database.DevicesQueries.{existDeviceUUID, insertDevices}
+import battery.bot.database.DevicesQueries._
 import battery.bot.database.UsersQueries._
 import cats.effect.IO
 import doobie.Transactor
@@ -21,6 +21,9 @@ class PersistenceService(ta: Transactor[IO]) {
 
   def addDevice(userId: UUID, name: String, chargingTime: Double): IO[Int] =
     insertDevices(UUID.randomUUID(), userId, name, chargingTime).run.transact(ta)
+
+  def updateUserSettings(name: String, sleepingTime: Int, wakeupTime: Int, nightCharge: Boolean): IO[Int] =
+    updateSettings(name, sleepingTime, wakeupTime, nightCharge).run.transact(ta)
 
   def getUserID(username: String): IO[UUID] =
     getUserUUID(username).unique.transact(ta)
