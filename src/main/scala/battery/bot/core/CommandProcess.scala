@@ -67,7 +67,6 @@ class CommandProcess(persistenceService: PersistenceService, telegramClient: Tel
           s"El usuario se levanta a las $sleepingTime, se acuesta a las $wakeUpTime y permite cargar durante la noche"
         )
         .void
-
     } else {
       telegramClient
         .sendMessage(
@@ -88,14 +87,16 @@ class CommandProcess(persistenceService: PersistenceService, telegramClient: Tel
   def updateSettings(result: Update): IO[Unit] = {
     val data = result.message.text.split(";").toList
     data match {
-      case _ :: sleepingTime :: wakeUpTime :: nightCharge :: Nil =>
+      case _ :: sleepingTime :: wakeUpTime :: nightCharge :: Nil
+          if sleepingTime.toIntOption.nonEmpty && wakeUpTime.toIntOption.nonEmpty && nightCharge.toBooleanOption.nonEmpty =>
         for {
-          _ <- persistenceService.updateUserSettings(
-            result.message.from.username,
-            sleepingTime.toInt,
-            wakeUpTime.toInt,
-            nightCharge.toBoolean
-          )
+          _ <- persistenceService
+            .updateUserSettings(
+              result.message.from.username,
+              sleepingTime.toInt,
+              wakeUpTime.toInt,
+              nightCharge.toBoolean
+            )
           _ <- telegramClient
             .sendMessage(
               result.message.chat.id,
@@ -107,7 +108,7 @@ class CommandProcess(persistenceService: PersistenceService, telegramClient: Tel
           _ <- telegramClient
             .sendMessage(
               result.message.chat.id,
-              "El formato del comando no es el adecuado"
+              "El formato del comando no es el adecuado, por favor siga el siguiente => /editarConfiguracion;[Número];[Número];[true o false]"
             )
         } yield ()
     }
