@@ -114,13 +114,20 @@ class CommandProcess(persistenceService: PersistenceService, telegramClient: Tel
     }
   }
 
-  def updateDevice(result: Update): IO[Unit] ={
+  def userDevices(result: Update): IO[Unit] = {
+    for {
+      userId      <- persistenceService.getUserID(result.message.from.username)
+      devicesList <- persistenceService.getUserDevicesName(userId)
+      _           <- updateDevice(result, devicesList)
+    } yield ()
+  }
+
+  def updateDevice(result: Update, devicesList: List[String]): IO[Unit] = {
     val data = result.message.text.split(";").toList
     data match {
-      case _ :: name :: chargingTime :: Nil
-        if chargingTime.toDoubleOption.nonEmpty  =>
+      case _ :: name :: chargingTime :: Nil if chargingTime.toDoubleOption.nonEmpty && devicesList.contains(name) =>
         for {
-          userId        <- persistenceService.getUserID(result.message.from.username)
+          userId <- persistenceService.getUserID(result.message.from.username)
           _ <- persistenceService
             .updateDeviceSettings(
               name,
@@ -133,14 +140,28 @@ class CommandProcess(persistenceService: PersistenceService, telegramClient: Tel
               "El dispositivo ha sido actualizado"
             )
         } yield ()
+      case _ :: name :: chargingTime :: Nil
+          if chargingTime.toDoubleOption.nonEmpty && !devicesList.contains(name) && devicesList.nonEmpty =>
+        telegramClient
+          .sendMessage(
+            result.message.chat.id,
+            s"El usuario no tiene ningún dispositivo con el nombre $name"
+          )
+          .void
+      case _ :: name :: chargingTime :: Nil if chargingTime.toDoubleOption.nonEmpty && devicesList.isEmpty =>
+        telegramClient
+          .sendMessage(
+            result.message.chat.id,
+            s"El usuario no tiene ningún dispositivo"
+          )
+          .void
       case _ =>
-        for {
-          _ <- telegramClient
-            .sendMessage(
-              result.message.chat.id,
-              "El formato del comando no es el adecuado, por favor siga el siguiente => /editarDispositivo;[Nombre];[Tiempo de carga]"
-            )
-        } yield ()
+        telegramClient
+          .sendMessage(
+            result.message.chat.id,
+            "El formato del comando no es el adecuado, por favor siga el siguiente => /editarDispositivo;[Nombre];[Tiempo de carga]"
+          )
+          .void
     }
   }
 
@@ -179,6 +200,7 @@ class CommandProcess(persistenceService: PersistenceService, telegramClient: Tel
       case (update, message) if message.startsWith("/addDevice")           => addDeviceCommand(update)
       case (update, message) if message.startsWith("/verConfiguracion")    => checkSettings(update)
       case (update, message) if message.startsWith("/editarConfiguracion") => updateSettings(update)
+      case (update, message) if message.startsWith("/editarDispositivo")   => userDevices(update)
       case (update, message) if message.startsWith("/help")                => telegramClient.sendMessage(update.message.chat.id, "WIP")
       case (update, message) =>
         telegramClient.sendMessage(update.message.chat.id, s"No se ha detectado ningún comando: $message")

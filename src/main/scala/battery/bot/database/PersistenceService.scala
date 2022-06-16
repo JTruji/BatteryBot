@@ -36,4 +36,7 @@ class PersistenceService(ta: Transactor[IO]) {
 
   def getUserSetting(userName: String): IO[UserSettings] =
     getSettings(userName).unique.transact(ta)
+
+  def getUserDevicesName(userName: UUID): IO[List[String]] =
+    userDevicesName(userName).to[List].transact(ta)
 }

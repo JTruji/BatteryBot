@@ -16,4 +16,7 @@ object DevicesQueries {
     sql"""select exists (id_device) from devices where name = $deviceName and id_user = $userName"""
       .query[Boolean]
 
+  def userDevicesName(userName: UUID): doobie.Query0[String] =
+    sql"""select name from devices where id_user = $userName"""
+      .query[String]
 }
