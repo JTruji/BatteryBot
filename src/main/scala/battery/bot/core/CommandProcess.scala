@@ -114,6 +114,36 @@ class CommandProcess(persistenceService: PersistenceService, telegramClient: Tel
     }
   }
 
+  def updateDevice(result: Update): IO[Unit] ={
+    val data = result.message.text.split(";").toList
+    data match {
+      case _ :: name :: chargingTime :: Nil
+        if chargingTime.toDoubleOption.nonEmpty  =>
+        for {
+          userId        <- persistenceService.getUserID(result.message.from.username)
+          _ <- persistenceService
+            .updateDeviceSettings(
+              name,
+              chargingTime.toDouble,
+              userId
+            )
+          _ <- telegramClient
+            .sendMessage(
+              result.message.chat.id,
+              "El dispositivo ha sido actualizado"
+            )
+        } yield ()
+      case _ =>
+        for {
+          _ <- telegramClient
+            .sendMessage(
+              result.message.chat.id,
+              "El formato del comando no es el adecuado, por favor siga el siguiente => /editarDispositivo;[Nombre];[Tiempo de carga]"
+            )
+        } yield ()
+    }
+  }
+
   def interpreter(results: List[TelegramUpdate]): IO[List[AnyVal]] = {
     val updates = results.foldLeft(List.empty[Update]) {
       case (
