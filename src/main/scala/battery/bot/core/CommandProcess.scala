@@ -9,7 +9,7 @@ import cats.implicits.toTraverseOps
 
 class CommandProcess(persistenceService: PersistenceService, telegramClient: TelegramClient) {
 
-  def startCommand(result: Update): IO[Unit] =
+  def startCommand(result: Update): IO[Unit] = {
     for {
       _ <- persistenceService.addUser(result.message.from.username, 22, 6, false)
       _ <- telegramClient
@@ -18,6 +18,7 @@ class CommandProcess(persistenceService: PersistenceService, telegramClient: Tel
           "Se ha configurado por defecto que se acuesta a las 22:00, se levanta a las 06:00 y que no desea cargar dispositivos durante la noche. Para saber como puede modificar sus ajustes escriba /help"
         )
     } yield ()
+  }
 
   def deviceRepeated(result: Update, deviceExist: Boolean, deviceName: String, chargingTime: Double): IO[Unit] = {
     if (deviceExist) {
@@ -148,7 +149,7 @@ class CommandProcess(persistenceService: PersistenceService, telegramClient: Tel
             s"El usuario no tiene ningún dispositivo con el nombre $name"
           )
           .void
-      case _ :: name :: chargingTime :: Nil if chargingTime.toDoubleOption.nonEmpty && devicesList.isEmpty =>
+      case _ :: _ :: chargingTime :: Nil if chargingTime.toDoubleOption.nonEmpty && devicesList.isEmpty =>
         telegramClient
           .sendMessage(
             result.message.chat.id,
