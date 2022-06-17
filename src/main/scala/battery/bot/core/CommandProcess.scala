@@ -124,9 +124,9 @@ class CommandProcess(persistenceService: PersistenceService, telegramClient: Tel
   }
 
   def updateDevice(result: Update, devicesList: List[String]): IO[Unit] = {
-    val data = result.message.text.split(";").toList
+    val data = result.message.text.split(";").toList.tail
     data match {
-      case _ :: name :: chargingTime :: Nil if chargingTime.toDoubleOption.nonEmpty && devicesList.contains(name) =>
+      case name :: chargingTime :: Nil if chargingTime.toDoubleOption.nonEmpty && devicesList.contains(name) =>
         for {
           userId <- persistenceService.getUserID(result.message.from.username)
           _ <- persistenceService
@@ -141,7 +141,7 @@ class CommandProcess(persistenceService: PersistenceService, telegramClient: Tel
               "El dispositivo ha sido actualizado"
             )
         } yield ()
-      case _ :: name :: chargingTime :: Nil
+      case name :: chargingTime :: Nil
           if chargingTime.toDoubleOption.nonEmpty && !devicesList.contains(name) && devicesList.nonEmpty =>
         telegramClient
           .sendMessage(
@@ -149,7 +149,7 @@ class CommandProcess(persistenceService: PersistenceService, telegramClient: Tel
             s"El usuario no tiene ningún dispositivo con el nombre $name"
           )
           .void
-      case _ :: _ :: chargingTime :: Nil if chargingTime.toDoubleOption.nonEmpty && devicesList.isEmpty =>
+      case _ :: chargingTime :: Nil if chargingTime.toDoubleOption.nonEmpty && devicesList.isEmpty =>
         telegramClient
           .sendMessage(
             result.message.chat.id,
