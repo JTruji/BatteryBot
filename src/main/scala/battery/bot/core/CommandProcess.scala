@@ -9,6 +9,29 @@ import cats.implicits.toTraverseOps
 
 class CommandProcess(persistenceService: PersistenceService, telegramClient: TelegramClient) {
 
+  def calculateCommand(result: Update): IO[Unit] = {
+    val data = result.message.text.split(";").toList
+    data match {
+      case _ :: deviceName :: Nil =>
+        for {
+          userid        <- persistenceService.getUserID(result.message.from.username)
+          chargingTime <- persistenceService.getDeviceChargingTime(userid, deviceName)
+          _ <- telegramClient
+            .sendMessage(
+              result.message.chat.id,
+              s"Voy a tardar $chargingTime horas"
+            )
+        } yield ()
+      case _ =>
+        telegramClient
+          .sendMessage(
+            result.message.chat.id,
+            "El formato del comando no es el adecuado"
+          )
+          .void
+    }
+  }
+
   def startCommand(result: Update): IO[Unit] =
     for {
       _ <- persistenceService.addUser(result.message.from.username, 22, 6, false)
@@ -145,8 +168,9 @@ class CommandProcess(persistenceService: PersistenceService, telegramClient: Tel
     val telegramMessages = updates.map(up => (up, up.message.text))
 
     telegramMessages.traverse {
+      case (update, message) if message.startsWith("/calcular")            => calculateCommand(update)
       case (update, message) if message.startsWith("/start")               => startCommand(update)
-      case (update, message) if message.startsWith("/addDevice")           => addDeviceCommand(update)
+      //case (update, message) if message.startsWith("/addDevice")           => addDeviceCommand(update)
       case (update, message) if message.startsWith("/verConfiguracion")    => checkSettings(update)
       case (update, message) if message.startsWith("/editarConfiguracion") => updateSettings(update)
       case (update, message) if message.startsWith("/help")                => telegramClient.sendMessage(update.message.chat.id, "WIP")
