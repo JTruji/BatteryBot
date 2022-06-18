@@ -12,10 +12,6 @@ object DevicesQueries {
     sql"""update devices set charging_time = $chargingTime where name = $name and id_user = $userId""".update
 
   // Get device UUID
-  def existDeviceUUID(userId: UUID, deviceName: String): doobie.Query0[Boolean] =
-    sql"""select exists (id_device) from devices where name = $deviceName and id_user = $userId"""
-      .query[Boolean]
-
   def userDevicesName(userId: UUID): doobie.Query0[String] =
     sql"""select name from devices where id_user = $userId"""
       .query[String]

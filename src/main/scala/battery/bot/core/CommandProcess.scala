@@ -20,35 +20,25 @@ class CommandProcess(persistenceService: PersistenceService, telegramClient: Tel
     } yield ()
   }
 
-  def deviceRepeated(result: Update, deviceExist: Boolean, deviceName: String, chargingTime: Double): IO[Unit] = {
-    if (deviceExist) {
-      telegramClient
-        .sendMessage(
-          result.message.chat.id,
-          "El usuario ya tiene un dispositivo con el mismo nombre, por favor introduzca un nombre diferente."
-        )
-        .void
-    } else {
-      for {
-        userID <- persistenceService.getUserID(result.message.from.username)
-        _      <- persistenceService.addDevice(userID, deviceName, chargingTime)
-        _ <- telegramClient
-          .sendMessage(
-            result.message.chat.id,
-            "El dispositivo se ha guardado correctamente."
-          )
-      } yield ()
-    }
-  }
-
-  def addDeviceCommand(result: Update): IO[Unit] = {
+  def addDeviceCommand(result: Update, devicesList: List[String]): IO[Unit] = {
     val data = result.message.text.split(";").toList
     data match {
-      case _ :: deviceName :: chargingTime :: Nil =>
+      case _ :: deviceName :: chargingTime :: Nil if devicesList.contains(deviceName) =>
+        telegramClient
+          .sendMessage(
+            result.message.chat.id,
+            "El usuario ya tiene un dispositivo con ese nombre, cambielo"
+          )
+          .void
+      case _ :: deviceName :: chargingTime :: Nil if !devicesList.contains(deviceName) =>
         for {
-          userid        <- persistenceService.getUserID(result.message.from.username)
-          userHasDevice <- persistenceService.existDeviceID(userid, deviceName)
-          _             <- deviceRepeated(result, userHasDevice, deviceName, chargingTime.toDouble)
+          userID <- persistenceService.getUserID(result.message.from.username)
+          _      <- persistenceService.addDevice(userID, deviceName, chargingTime.toDouble)
+          _ <- telegramClient
+            .sendMessage(
+              result.message.chat.id,
+              "El dispositivo se ha guardado correctamente."
+            )
         } yield ()
       case _ =>
         telegramClient
@@ -120,6 +110,14 @@ class CommandProcess(persistenceService: PersistenceService, telegramClient: Tel
       userId      <- persistenceService.getUserID(result.message.from.username)
       devicesList <- persistenceService.getUserDevicesName(userId)
       _           <- updateDevice(result, devicesList)
+    } yield ()
+  }
+
+  def userDevicesForAdd(result: Update): IO[Unit] = {
+    for {
+      userId      <- persistenceService.getUserID(result.message.from.username)
+      devicesList <- persistenceService.getUserDevicesName(userId)
+      _           <- addDeviceCommand(result, devicesList)
     } yield ()
   }
 
@@ -197,7 +195,7 @@ class CommandProcess(persistenceService: PersistenceService, telegramClient: Tel
 
     telegramMessages.traverse {
       case (update, message) if message.startsWith("/start")               => startCommand(update)
-      case (update, message) if message.startsWith("/addDevice")           => addDeviceCommand(update)
+      case (update, message) if message.startsWith("/addDevice")           => userDevicesForAdd(update)
       case (update, message) if message.startsWith("/verConfiguracion")    => checkSettings(update)
       case (update, message) if message.startsWith("/editarConfiguracion") => updateSettings(update)
       case (update, message) if message.startsWith("/editarDispositivo")   => userDevices(update)
