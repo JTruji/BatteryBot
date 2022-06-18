@@ -11,4 +11,8 @@ object PricesQueries {
   val insertManyPrices: Update[(Instant, BigDecimal)] =
     Update[(Instant, BigDecimal)]("insert into prices (time_range, price) values (?, ?) on conflict do nothing")
 
+  def pricesTime(time): doobie.Query0[BigDecimal] =
+    sql"""select price from prices where time_range >= $time"""
+      .query[BigDecimal]
+
 }

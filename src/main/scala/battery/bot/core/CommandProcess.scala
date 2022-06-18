@@ -7,7 +7,24 @@ import battery.bot.telegram.models.{TelegramChat, TelegramFrom, TelegramMessage,
 import cats.effect.IO
 import cats.implicits.toTraverseOps
 
+import java.time.Instant
+
 class CommandProcess(persistenceService: PersistenceService, telegramClient: TelegramClient) {
+
+  def minPrices(chargingTime: Boolean, priceList: List[BigDecimal]) = {
+    val priceListFilter = priceList.take(chargingTime. ???)
+    val priceListReduced = priceList.tail
+    val priceListReducedFilter = priceListReduced.take(chargingTime. ???)
+    if priceListFilter < priceListReducedFilter {
+      telegramClient
+        .sendMessage(
+          result.message.chat.id,
+          "El mejor horario es ???"
+        )
+    } else {
+      minPrices(priceListReduced)
+    }
+  }
 
   def calculateCommand(result: Update): IO[Unit] = {
     val data = result.message.text.split(";").toList
@@ -16,11 +33,8 @@ class CommandProcess(persistenceService: PersistenceService, telegramClient: Tel
         for {
           userid        <- persistenceService.getUserID(result.message.from.username)
           chargingTime <- persistenceService.getDeviceChargingTime(userid, deviceName)
-          _ <- telegramClient
-            .sendMessage(
-              result.message.chat.id,
-              s"Voy a tardar $chargingTime horas"
-            )
+          pricesList <- persistenceService.getPricesTime(Instant.now())
+          _ <-minPrices(chargingTime,pricesList)
         } yield ()
       case _ =>
         telegramClient

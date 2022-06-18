@@ -3,6 +3,7 @@ package battery.bot.database
 import battery.bot.core.models.UserSettings
 import battery.bot.database.DevicesQueries._
 import battery.bot.database.UsersQueries._
+import battery.bot.database.PricesQueries._
 import cats.effect.IO
 import doobie.Transactor
 import doobie.implicits._
@@ -36,4 +37,7 @@ class PersistenceService(ta: Transactor[IO]) {
 
   def getDeviceChargingTime(userName: UUID, deviceName: String): IO[Double] =
     getChargingTime(userName: UUID, deviceName: String).unique.transact(ta)
+
+  def getPricesTime(time: Instant): IO[List[BigDecimal]] =
+    pricesTime(time: Instant).to[List].transact(ta)
 }
