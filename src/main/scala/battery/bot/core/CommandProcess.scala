@@ -141,15 +141,14 @@ class CommandProcess(persistenceService: PersistenceService, telegramClient: Tel
               "El dispositivo ha sido actualizado"
             )
         } yield ()
-      case name :: chargingTime :: Nil
-          if chargingTime.toDoubleOption.nonEmpty && !devicesList.contains(name) && devicesList.nonEmpty =>
+      case name :: chargingTime :: Nil if !devicesList.contains(name) && devicesList.nonEmpty =>
         telegramClient
           .sendMessage(
             result.message.chat.id,
             s"El usuario no tiene ningún dispositivo con el nombre $name"
           )
           .void
-      case _ :: chargingTime :: Nil if chargingTime.toDoubleOption.nonEmpty && devicesList.isEmpty =>
+      case _ :: _ :: Nil if devicesList.isEmpty =>
         telegramClient
           .sendMessage(
             result.message.chat.id,
