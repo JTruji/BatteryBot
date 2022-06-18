@@ -17,5 +17,5 @@ object DevicesQueries {
       .query[Boolean]
 
   def getChargingTime(userName: UUID, deviceName: String): doobie.Query0[Double] =
-    sql"""select chargingTime from devices where name = $deviceName and id_user = $userName""".query[Double]
+    sql"""select charging_time from devices where name = $deviceName and id_user = $userName""".query[Double]
 }
