@@ -8,22 +8,25 @@ import cats.effect.IO
 import cats.implicits.toTraverseOps
 
 import java.time.Instant
+import java.math.BigDecimal
 
 class CommandProcess(persistenceService: PersistenceService, telegramClient: TelegramClient) {
 
-  def minPrices(chargingTime: Boolean, priceList: List[BigDecimal]) = {
-    val priceListFilter = priceList.take(chargingTime. ???)
+  def minPrices(chargingTime: Int, priceList: List[BigDecimal], result: Update): Any = {
+    val priceListFilter = priceList.take(chargingTime).fold _
     val priceListReduced = priceList.tail
-    val priceListReducedFilter = priceListReduced.take(chargingTime. ???)
-    if priceListFilter < priceListReducedFilter {
-      telegramClient
-        .sendMessage(
-          result.message.chat.id,
-          "El mejor horario es ???"
-        )
-    } else {
-      minPrices(priceListReduced)
-    }
+    val priceListReducedFilter = priceListReduced.take(chargingTime).fold _
+    println(priceListFilter)
+    println(priceListReducedFilter)
+    //if (priceListFilter.compareTo(priceListReducedFilter)<0 {
+    //  telegramClient
+    //    .sendMessage(
+    //      result.message.chat.id,
+    //      "El mejor horario es ???"
+    //    ). void
+    //}  else {
+    //  minPrices(chargingTime, priceListReduced, result)
+    //}
   }
 
   def calculateCommand(result: Update): IO[Unit] = {
@@ -34,8 +37,8 @@ class CommandProcess(persistenceService: PersistenceService, telegramClient: Tel
           userid        <- persistenceService.getUserID(result.message.from.username)
           chargingTime <- persistenceService.getDeviceChargingTime(userid, deviceName)
           pricesList <- persistenceService.getPricesTime(Instant.now())
-          _ <-minPrices(chargingTime,pricesList)
-        } yield ()
+          _ <- IO.pure(println(pricesList))
+        } yield minPrices(chargingTime.toInt, pricesList, result)
       case _ =>
         telegramClient
           .sendMessage(
