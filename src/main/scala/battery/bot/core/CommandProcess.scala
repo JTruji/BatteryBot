@@ -1,6 +1,6 @@
 package battery.bot.core
 
-import battery.bot.core.models.{Chat, From, Message, Update}
+import battery.bot.core.models._
 import battery.bot.database.PersistenceService
 import battery.bot.telegram.TelegramClient
 import battery.bot.telegram.models.{TelegramChat, TelegramFrom, TelegramMessage, TelegramUpdate}
@@ -9,24 +9,36 @@ import cats.implicits.toTraverseOps
 
 import java.time.Instant
 import java.math.BigDecimal
+import scala.jdk.CollectionConverters._
 
 class CommandProcess(persistenceService: PersistenceService, telegramClient: TelegramClient) {
 
-  def minPrices(chargingTime: Int, priceList: List[BigDecimal], result: Update): Any = {
-    val priceListFilter = priceList.take(chargingTime).fold _
-    val priceListReduced = priceList.tail
-    val priceListReducedFilter = priceListReduced.take(chargingTime).fold _
-    println(priceListFilter)
-    println(priceListReducedFilter)
-    //if (priceListFilter.compareTo(priceListReducedFilter)<0 {
-    //  telegramClient
-    //    .sendMessage(
-    //      result.message.chat.id,
-    //      "El mejor horario es ???"
-    //    ). void
-    //}  else {
-    //  minPrices(chargingTime, priceListReduced, result)
-    //}
+  def minPrices(chargingTime: Int, priceList: List[BigDecimal], result: Update): Unit = {
+    val priceListFilter        = priceList.take(2).foldLeft(scala.BigDecimal(0))(_ + _)
+    val priceListReduced       = priceList.tail
+    val priceListReducedFilter = priceListReduced.take(2).foldLeft(scala.BigDecimal(0))(_ + _)
+    println(priceList)
+    println(priceListFilter.toString())
+    println(priceListReduced)
+    println(priceListReducedFilter.toString())
+    if (priceListFilter.compareTo(priceListReducedFilter) < 0) {
+      val priceListFilter        = priceList.take(2).foldLeft(scala.BigDecimal(0))(_ + _)
+      for {
+        _ <- IO.pure(priceListFilter)
+        _ <- IO.pure(print("He entrado en el bueno"))
+        bestprice <- IO.pure(priceList.head)
+        _ <- IO.pure(bestprice)
+        time      <- persistenceService.getBestTime(bestprice, Instant.now())
+        _ <- telegramClient
+          .sendMessage(
+            result.message.chat.id,
+            s"El momento más barato para cargar el dispositivo es a las $time"
+          )
+      } yield ()
+    } else {
+      println("He entrado en el else")
+      minPrices(chargingTime, priceListReduced, result)
+    }
   }
 
   def calculateCommand(result: Update): IO[Unit] = {
@@ -34,10 +46,12 @@ class CommandProcess(persistenceService: PersistenceService, telegramClient: Tel
     data match {
       case _ :: deviceName :: Nil =>
         for {
-          userid        <- persistenceService.getUserID(result.message.from.username)
+          userid <- persistenceService.getUserID(result.message.from.username)
+          //_ <- IO.pure(println(userid))
           chargingTime <- persistenceService.getDeviceChargingTime(userid, deviceName)
+          //_ <- IO.pure(println(chargingTime))
           pricesList <- persistenceService.getPricesTime(Instant.now())
-          _ <- IO.pure(println(pricesList))
+          //_ <- IO.pure(println(pricesList))
         } yield minPrices(chargingTime.toInt, pricesList, result)
       case _ =>
         telegramClient
@@ -185,12 +199,12 @@ class CommandProcess(persistenceService: PersistenceService, telegramClient: Tel
     val telegramMessages = updates.map(up => (up, up.message.text))
 
     telegramMessages.traverse {
-      case (update, message) if message.startsWith("/calcular")            => calculateCommand(update)
-      case (update, message) if message.startsWith("/start")               => startCommand(update)
+      case (update, message) if message.startsWith("/calcular") => calculateCommand(update)
+      //case (update, message) if message.startsWith("/start")               => startCommand(update)
       //case (update, message) if message.startsWith("/addDevice")           => addDeviceCommand(update)
-      case (update, message) if message.startsWith("/verConfiguracion")    => checkSettings(update)
-      case (update, message) if message.startsWith("/editarConfiguracion") => updateSettings(update)
-      case (update, message) if message.startsWith("/help")                => telegramClient.sendMessage(update.message.chat.id, "WIP")
+      //case (update, message) if message.startsWith("/verConfiguracion")    => checkSettings(update)
+      //case (update, message) if message.startsWith("/editarConfiguracion") => updateSettings(update)
+      //case (update, message) if message.startsWith("/help")                => telegramClient.sendMessage(update.message.chat.id, "WIP")
       case (update, message) =>
         telegramClient.sendMessage(update.message.chat.id, s"No se ha detectado ningún comando: $message")
     }

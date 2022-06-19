@@ -12,7 +12,9 @@ object PricesQueries {
     Update[(Instant, BigDecimal)]("insert into prices (time_range, price) values (?, ?) on conflict do nothing")
 
   def pricesTime(time: Instant): doobie.Query0[BigDecimal] =
-    sql"""select price from prices where time_range between ($time and  $time + '1 day'::interval)"""
+    sql"""select price from prices where time_range > $time"""
       .query[BigDecimal]
 
+  def getTime(price:BigDecimal, time: Instant): doobie.Query0[BigDecimal] =
+    sql"""select time_range from prices where time_range > $time and price = $price""".query[BigDecimal]
 }

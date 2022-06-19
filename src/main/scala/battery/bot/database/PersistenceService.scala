@@ -40,4 +40,7 @@ class PersistenceService(ta: Transactor[IO]) {
 
   def getPricesTime(time: Instant): IO[List[BigDecimal]] =
     pricesTime(time: Instant).to[List].transact(ta)
+
+  def getBestTime(price:BigDecimal, time: Instant): IO[BigDecimal] =
+    getTime(price:BigDecimal, time: Instant).unique.transact(ta)
 }
