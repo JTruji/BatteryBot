@@ -59,16 +59,16 @@ class CommandProcess(persistenceService: PersistenceService, telegramClient: Tel
   }
 
   def addDeviceCommand(result: Update, devicesList: List[String]): IO[Unit] = {
-    val data = result.message.text.split(";").toList
+    val data = result.message.text.split(";").toList.tail
     data match {
-      case _ :: deviceName :: chargingTime :: Nil if devicesList.contains(deviceName) =>
+      case deviceName :: chargingTime :: Nil if devicesList.contains(deviceName) =>
         telegramClient
           .sendMessage(
             result.message.chat.id,
             "El usuario ya tiene un dispositivo con ese nombre, cambielo"
           )
           .void
-      case _ :: deviceName :: chargingTime :: Nil if !devicesList.contains(deviceName) =>
+      case deviceName :: chargingTime :: Nil if !devicesList.contains(deviceName) =>
         for {
           userID <- persistenceService.getUserID(result.message.from.username)
           _      <- persistenceService.addDevice(userID, deviceName, chargingTime.toDouble)
@@ -114,9 +114,9 @@ class CommandProcess(persistenceService: PersistenceService, telegramClient: Tel
   }
 
   def updateSettings(result: Update): IO[Unit] = {
-    val data = result.message.text.split(";").toList
+    val data = result.message.text.split(";").toList.tail
     data match {
-      case _ :: sleepingTime :: wakeUpTime :: nightCharge :: Nil
+      case sleepingTime :: wakeUpTime :: nightCharge :: Nil
           if sleepingTime.toIntOption.nonEmpty && wakeUpTime.toIntOption.nonEmpty && nightCharge.toBooleanOption.nonEmpty =>
         for {
           _ <- persistenceService
