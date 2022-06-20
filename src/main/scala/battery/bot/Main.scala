@@ -32,6 +32,8 @@ object Main extends IOApp {
       .load()
       .migrate
 
+
+
     val telegramClient = EmberClientBuilder.default[IO].build.map { client =>
       new TelegramClient(client, config.telegramToken)
     }
@@ -40,10 +42,12 @@ object Main extends IOApp {
 
     def process(telegramClient: TelegramClient) = {
       val commandProcess = new CommandProcess(persistenceService, telegramClient)
+      val streamingProcess = new StreamingProcess(telegramClient, commandProcess)
       for {
         _    <- scraperProcess.getNewPrices
-        json <- telegramClient.telegramGetUpdate
-        _    <- commandProcess.interpreter(json.result)
+        //json <- telegramClient.telegramGetUpdate
+        _ <- streamingProcess.process
+        //_    <- commandProcess.interpreter(streamingJson)
       } yield ExitCode.Success
     }
 
