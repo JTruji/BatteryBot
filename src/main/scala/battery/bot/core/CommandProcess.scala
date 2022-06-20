@@ -9,6 +9,44 @@ import cats.implicits.toTraverseOps
 
 class CommandProcess(persistenceService: PersistenceService, telegramClient: TelegramClient) {
 
+  def userDevicesForDelete(result: Update): IO[Unit] = {
+    for {
+      userId      <- persistenceService.getUserID(result.message.from.username)
+      devicesList <- persistenceService.getUserDevicesName(userId)
+      _           <- deleteDevice(result, devicesList)
+    } yield ()
+  }
+
+ def deleteDevice(result: Update, devicesList: List[String]): IO[Unit] ={
+   val data = result.message.text.split(";").toList.tail
+   data match {
+     case deviceName :: Nil if !devicesList.contains(deviceName) =>
+       telegramClient
+         .sendMessage(
+           result.message.chat.id,
+           "El usuario no tiene un dispositivo con ese nombre"
+         )
+         .void
+     case deviceName :: Nil if devicesList.contains(deviceName) =>
+       for {
+         userID <- persistenceService.getUserID(result.message.from.username)
+         _      <- persistenceService.removeDevice(userID, deviceName)
+         _ <- telegramClient
+           .sendMessage(
+             result.message.chat.id,
+             "El dispositivo se ha borrado correctamente."
+           )
+       } yield ()
+     case _ =>
+       telegramClient
+         .sendMessage(
+           result.message.chat.id,
+           "El formato del comando no es el adecuado"
+         )
+         .void
+   }
+ }
+
   def startCommand(result: Update): IO[Unit] = {
     for {
       _ <- persistenceService.addUser(result.message.from.username, 22, 6, false)
@@ -21,16 +59,16 @@ class CommandProcess(persistenceService: PersistenceService, telegramClient: Tel
   }
 
   def addDeviceCommand(result: Update, devicesList: List[String]): IO[Unit] = {
-    val data = result.message.text.split(";").toList
+    val data = result.message.text.split(";").toList.tail
     data match {
-      case _ :: deviceName :: chargingTime :: Nil if devicesList.contains(deviceName) =>
+      case deviceName :: chargingTime :: Nil if devicesList.contains(deviceName) =>
         telegramClient
           .sendMessage(
             result.message.chat.id,
             "El usuario ya tiene un dispositivo con ese nombre, cambielo"
           )
           .void
-      case _ :: deviceName :: chargingTime :: Nil if !devicesList.contains(deviceName) =>
+      case deviceName :: chargingTime :: Nil if !devicesList.contains(deviceName) =>
         for {
           userID <- persistenceService.getUserID(result.message.from.username)
           _      <- persistenceService.addDevice(userID, deviceName, chargingTime.toDouble)
@@ -76,9 +114,9 @@ class CommandProcess(persistenceService: PersistenceService, telegramClient: Tel
   }
 
   def updateSettings(result: Update): IO[Unit] = {
-    val data = result.message.text.split(";").toList
+    val data = result.message.text.split(";").toList.tail
     data match {
-      case _ :: sleepingTime :: wakeUpTime :: nightCharge :: Nil
+      case sleepingTime :: wakeUpTime :: nightCharge :: Nil
           if sleepingTime.toIntOption.nonEmpty && wakeUpTime.toIntOption.nonEmpty && nightCharge.toBooleanOption.nonEmpty =>
         for {
           _ <- persistenceService
@@ -196,6 +234,7 @@ class CommandProcess(persistenceService: PersistenceService, telegramClient: Tel
     telegramMessages.traverse {
       case (update, message) if message.startsWith("/start")               => startCommand(update)
       case (update, message) if message.startsWith("/addDevice")           => userDevicesForAdd(update)
+      case (update, message) if message.startsWith("/borrarDispositivo")   => userDevicesForDelete(update)
       case (update, message) if message.startsWith("/verConfiguracion")    => checkSettings(update)
       case (update, message) if message.startsWith("/editarConfiguracion") => updateSettings(update)
       case (update, message) if message.startsWith("/editarDispositivo")   => userDevices(update)
