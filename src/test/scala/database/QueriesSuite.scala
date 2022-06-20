@@ -13,8 +13,9 @@ class QueriesSuite extends PersistenceBaseSuite with IOChecker {
   }
   test("Devices queries works as expected") {
     check(DevicesQueries.insertDevices(UUID.randomUUID(), UUID.randomUUID(), "patinete", 8.0d));
-    check(DevicesQueries.updateChargingTime("patinete", 9.0d))
-    check(DevicesQueries.existDeviceUUID(UUID.randomUUID(), "patinete"))
+    check(DevicesQueries.updateChargingTime("patinete", 9.0d, UUID.randomUUID()))
+    check(DevicesQueries.userDevicesName(UUID.randomUUID()))
+    check(DevicesQueries.deleteDevice(UUID.randomUUID(),"patinete"))
   }
   test("Users queries works as expected") {
     check(UsersQueries.insertUsers(UUID.randomUUID(), "user01", 22, 9, false))

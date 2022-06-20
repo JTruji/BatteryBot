@@ -22,14 +22,17 @@ class PersistenceService(ta: Transactor[IO]) {
   def addDevice(userId: UUID, name: String, chargingTime: Double): IO[Int] =
     insertDevices(UUID.randomUUID(), userId, name, chargingTime).run.transact(ta)
 
+  def removeDevice(userId: UUID, deviceName: String): IO[Int] =
+    deleteDevice(userId, deviceName).run.transact(ta)
+
   def updateUserSettings(name: String, sleepingTime: Int, wakeupTime: Int, nightCharge: Boolean): IO[Int] =
     updateSettings(name, sleepingTime, wakeupTime, nightCharge).run.transact(ta)
 
+  def updateDeviceSettings(name: String, chargingTime: Double, userName: UUID): IO[Int] =
+    updateChargingTime(name, chargingTime, userName).run.transact(ta)
+
   def getUserID(username: String): IO[UUID] =
     getUserUUID(username).unique.transact(ta)
-
-  def existDeviceID(userName: UUID, deviceName: String): IO[Boolean] =
-    existDeviceUUID(userName, deviceName).unique.transact(ta)
 
   def getUserSetting(userName: String): IO[UserSettings] =
     getSettings(userName).unique.transact(ta)
@@ -42,4 +45,7 @@ class PersistenceService(ta: Transactor[IO]) {
 
   def getBestTime(price:BigDecimal, time: Instant): IO[LocalDateTime] =
     getTime(price, time).unique.transact(ta)
+
+  def getUserDevicesName(userName: UUID): IO[List[String]] =
+    userDevicesName(userName).to[List].transact(ta)
 }
