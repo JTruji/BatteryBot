@@ -32,7 +32,7 @@ class CommandProcess(persistenceService: PersistenceService, telegramClient: Tel
     val newPriceList          = priceList.tail
     val newPriceListFilter    = newPriceList.take(chargingTime)
     val newPriceListFilterSum = newPriceListFilter.sum
-    if ((priceListFilterSum < newPriceListFilterSum) & (newPriceList.length > chargingTime.intValue)) {
+    if ((priceListFilterSum < newPriceListFilterSum) & (newPriceList.length > chargingTime.toInt)) {
       minPrices(chargingTime, newPriceList, result, priceListFilter)
     } else if ((newPriceList.length == chargingTime.intValue) & (minorPrice.sum < newPriceListFilterSum)) {
       calculatePriceMessage(result, minorPrice.head)
