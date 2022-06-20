@@ -15,6 +15,6 @@ object PricesQueries {
     sql"""select price from prices where time_range > $time"""
       .query[BigDecimal]
 
-  def getTime(price:BigDecimal, time: Instant): doobie.Query0[BigDecimal] =
-    sql"""select time_range from prices where time_range > $time and price = $price""".query[BigDecimal]
+  def getTime(price:BigDecimal, time: Instant): doobie.Query0[Instant] =
+    sql"""select time_range from prices where price = $price""".query[Instant]
 }

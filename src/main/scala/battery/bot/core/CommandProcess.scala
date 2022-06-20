@@ -13,31 +13,46 @@ import scala.jdk.CollectionConverters._
 
 class CommandProcess(persistenceService: PersistenceService, telegramClient: TelegramClient) {
 
-  def minPrices(chargingTime: Int, priceList: List[BigDecimal], result: Update): Unit = {
-    val priceListFilter        = priceList.take(2).foldLeft(scala.BigDecimal(0))(_ + _)
-    val priceListReduced       = priceList.tail
-    val priceListReducedFilter = priceListReduced.take(2).foldLeft(scala.BigDecimal(0))(_ + _)
-    println(priceList)
-    println(priceListFilter.toString())
-    println(priceListReduced)
-    println(priceListReducedFilter.toString())
-    if (priceListFilter.compareTo(priceListReducedFilter) < 0) {
-      val priceListFilter        = priceList.take(2).foldLeft(scala.BigDecimal(0))(_ + _)
-      for {
-        _ <- IO.pure(priceListFilter)
-        _ <- IO.pure(print("He entrado en el bueno"))
-        bestprice <- IO.pure(priceList.head)
-        _ <- IO.pure(bestprice)
-        time      <- persistenceService.getBestTime(bestprice, Instant.now())
-        _ <- telegramClient
-          .sendMessage(
-            result.message.chat.id,
-            s"El momento más barato para cargar el dispositivo es a las $time"
-          )
-      } yield ()
+  def calculatePriceMessage(result: Update, minorPrice:BigDecimal): IO[Unit] = {
+    for {
+      time <- persistenceService.getBestTime(minorPrice, Instant.now())
+      _    <- IO.pure(println(time))
+      _ <- telegramClient
+        .sendMessage(
+          result.message.chat.id,
+          s"El mejor momento para cargar el dispositivo es desde las $time"
+        )
+    } yield ()
+  }
+
+  def minPrices(chargingTime: Int, priceList: List[BigDecimal], result: Update, minorPrice: List[BigDecimal]): Unit = {
+    val priceListFilter           = priceList.take(chargingTime)
+    val priceListFilterSum        = priceListFilter.foldLeft(scala.BigDecimal(0))(_ + _)
+    val priceListReduced          = priceList.tail
+    val priceListReducedFilterSum = priceListReduced.take(chargingTime).foldLeft(scala.BigDecimal(0))(_ + _)
+    //println(priceList)
+    //println(priceListFilter.toString())
+    //println(priceListReduced)
+    //println(priceListReducedFilterSum.toString())
+    println(priceListFilterSum.toString())
+    println(priceListReducedFilterSum.toString())
+    if (priceListFilterSum.compareTo(priceListReducedFilterSum) < 0) {
+      val minorPrice = priceListFilter
+      if (priceListReduced.length > chargingTime) {
+        println("Entré en el segundo if bueno")
+        minPrices(chargingTime, priceListReduced, result, minorPrice)
+      } else if (priceListReduced.length == chargingTime.intValue) {
+        calculatePriceMessage(result: Update, minorPrice.head)
+      }
+      else
+          println("Entré en el segundo else")
+          println(s"minor price vale $minorPrice")
+      println(s" y quedan $priceListReduced valores")
+         calculatePriceMessage(result: Update, minorPrice.head)
     } else {
       println("He entrado en el else")
-      minPrices(chargingTime, priceListReduced, result)
+      println(s"minor price vale $minorPrice")
+      minPrices(chargingTime, priceListReduced, result, minorPrice)
     }
   }
 
@@ -52,7 +67,7 @@ class CommandProcess(persistenceService: PersistenceService, telegramClient: Tel
           //_ <- IO.pure(println(chargingTime))
           pricesList <- persistenceService.getPricesTime(Instant.now())
           //_ <- IO.pure(println(pricesList))
-        } yield minPrices(chargingTime.toInt, pricesList, result)
+        } yield minPrices(chargingTime.toInt, pricesList, result, List())
       case _ =>
         telegramClient
           .sendMessage(
