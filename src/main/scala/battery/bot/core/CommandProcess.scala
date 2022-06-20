@@ -6,73 +6,58 @@ import battery.bot.telegram.TelegramClient
 import battery.bot.telegram.models.{TelegramChat, TelegramFrom, TelegramMessage, TelegramUpdate}
 import cats.effect.IO
 import cats.implicits.toTraverseOps
-
 import java.time.Instant
-import java.math.BigDecimal
-import scala.jdk.CollectionConverters._
 
 class CommandProcess(persistenceService: PersistenceService, telegramClient: TelegramClient) {
 
-  def calculatePriceMessage(result: Update, minorPrice:BigDecimal): IO[Unit] = {
+  def calculatePriceMessage(result: Update, minorPrice: BigDecimal): IO[Unit] = {
     for {
       time <- persistenceService.getBestTime(minorPrice, Instant.now())
-      _    <- IO.pure(println(time))
       _ <- telegramClient
         .sendMessage(
           result.message.chat.id,
-          s"El mejor momento para cargar el dispositivo es desde las $time"
+          s"El mejor momento para cargar el dispositivo es desde las ${time.getHour}"
         )
     } yield ()
   }
 
-  def minPrices(chargingTime: Int, priceList: List[BigDecimal], result: Update, minorPrice: List[BigDecimal]): Unit = {
-    val priceListFilter           = priceList.take(chargingTime)
-    val priceListFilterSum        = priceListFilter.foldLeft(scala.BigDecimal(0))(_ + _)
-    val priceListReduced          = priceList.tail
-    val priceListReducedFilterSum = priceListReduced.take(chargingTime).foldLeft(scala.BigDecimal(0))(_ + _)
-    //println(priceList)
-    //println(priceListFilter.toString())
-    //println(priceListReduced)
-    //println(priceListReducedFilterSum.toString())
-    println(priceListFilterSum.toString())
-    println(priceListReducedFilterSum.toString())
-    if (priceListFilterSum.compareTo(priceListReducedFilterSum) < 0) {
-      val minorPrice = priceListFilter
-      if (priceListReduced.length > chargingTime) {
-        println("Entré en el segundo if bueno")
-        minPrices(chargingTime, priceListReduced, result, minorPrice)
-      } else if (priceListReduced.length == chargingTime.intValue) {
-        calculatePriceMessage(result: Update, minorPrice.head)
-      }
-      else
-          println("Entré en el segundo else")
-          println(s"minor price vale $minorPrice")
-      println(s" y quedan $priceListReduced valores")
-         calculatePriceMessage(result: Update, minorPrice.head)
+  def minPrices(
+      chargingTime: Int,
+      priceList: List[BigDecimal],
+      result: Update,
+      minorPrice: List[BigDecimal]
+  ): IO[Unit] = {
+    val priceListFilter       = priceList.take(chargingTime)
+    val priceListFilterSum    = priceListFilter.sum
+    val newPriceList          = priceList.tail
+    val newPriceListFilter    = newPriceList.take(chargingTime)
+    val newPriceListFilterSum = newPriceListFilter.sum
+    if ((priceListFilterSum < newPriceListFilterSum) & (newPriceList.length > chargingTime.intValue)) {
+      minPrices(chargingTime, newPriceList, result, priceListFilter)
+    } else if ((newPriceList.length == chargingTime.intValue) & (minorPrice.sum < newPriceListFilterSum)) {
+      calculatePriceMessage(result, minorPrice.head)
+    } else if ((newPriceList.length == chargingTime.intValue) & (minorPrice.sum > newPriceListFilterSum)) {
+      calculatePriceMessage(result, newPriceListFilter.head)
     } else {
-      println("He entrado en el else")
-      println(s"minor price vale $minorPrice")
-      minPrices(chargingTime, priceListReduced, result, minorPrice)
+      minPrices(chargingTime, newPriceList, result, minorPrice)
     }
   }
 
   def calculateCommand(result: Update): IO[Unit] = {
-    val data = result.message.text.split(";").toList
+    val data = result.message.text.split(";").toList.tail
     data match {
-      case _ :: deviceName :: Nil =>
+      case deviceName :: Nil =>
         for {
-          userid <- persistenceService.getUserID(result.message.from.username)
-          //_ <- IO.pure(println(userid))
+          userid       <- persistenceService.getUserID(result.message.from.username)
           chargingTime <- persistenceService.getDeviceChargingTime(userid, deviceName)
-          //_ <- IO.pure(println(chargingTime))
-          pricesList <- persistenceService.getPricesTime(Instant.now())
-          //_ <- IO.pure(println(pricesList))
-        } yield minPrices(chargingTime.toInt, pricesList, result, List())
+          pricesList   <- persistenceService.getPricesTime(Instant.now())
+          _            <- minPrices(chargingTime.toInt, pricesList, result, List())
+        } yield ()
       case _ =>
         telegramClient
           .sendMessage(
             result.message.chat.id,
-            "El formato del comando no es el adecuado"
+            "El formato del comando no es el adecuado, siga el siguiente /calcular;[Nombre del dispositivo]"
           )
           .void
     }
@@ -215,13 +200,12 @@ class CommandProcess(persistenceService: PersistenceService, telegramClient: Tel
 
     telegramMessages.traverse {
       case (update, message) if message.startsWith("/calcular") => calculateCommand(update)
-      //case (update, message) if message.startsWith("/start")               => startCommand(update)
-      //case (update, message) if message.startsWith("/addDevice")           => addDeviceCommand(update)
-      //case (update, message) if message.startsWith("/verConfiguracion")    => checkSettings(update)
-      //case (update, message) if message.startsWith("/editarConfiguracion") => updateSettings(update)
-      //case (update, message) if message.startsWith("/help")                => telegramClient.sendMessage(update.message.chat.id, "WIP")
-      case (update, message) =>
-        telegramClient.sendMessage(update.message.chat.id, s"No se ha detectado ningún comando: $message")
+      case (update, message) if message.startsWith("/start")               => startCommand(update)
+      //case (update, message) if message.startsWith("/addDevice")           => addDeviceCommand(update)     ??? method modified in other branch
+      case (update, message) if message.startsWith("/verConfiguracion")    => checkSettings(update)
+      case (update, message) if message.startsWith("/editarConfiguracion") => updateSettings(update)
+      case (update, message) if message.startsWith("/help")                => telegramClient.sendMessage(update.message.chat.id, "WIP")
+      case (update, message) => telegramClient.sendMessage(update.message.chat.id, s"No se ha detectado ningún comando: $message")
     }
   }
 }

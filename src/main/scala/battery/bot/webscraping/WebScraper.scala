@@ -3,7 +3,6 @@ package battery.bot.webscraping
 import cats.effect.IO
 import doobie.implicits._
 import org.jsoup.Jsoup
-import java.math.BigDecimal
 import java.time._
 
 object Scraper {
@@ -17,7 +16,7 @@ object Scraper {
       .split("€/kWh")
       .toList
       .map(_.trim)
-      .map(new BigDecimal(_))
+      .map(BigDecimal(_))
 
     val dateList = (0 to 23).toList.map(hour =>
       LocalDateTime.of(LocalDate.now(), LocalTime.of(hour, 0)).atZone(ZoneId.of("Europe/Madrid")).toInstant

@@ -4,8 +4,7 @@ import doobie.implicits._
 import doobie.postgres.implicits._
 import doobie.util.update.Update
 
-import java.math.BigDecimal
-import java.time.Instant
+import java.time.{Instant, LocalDateTime}
 
 object PricesQueries {
   val insertManyPrices: Update[(Instant, BigDecimal)] =
@@ -15,6 +14,7 @@ object PricesQueries {
     sql"""select price from prices where time_range > $time"""
       .query[BigDecimal]
 
-  def getTime(price:BigDecimal, time: Instant): doobie.Query0[Instant] =
-    sql"""select time_range from prices where price = $price""".query[Instant]
+  def getTime(price:BigDecimal, time: Instant): doobie.Query0[LocalDateTime] =
+//    sql"""select extract ('hour' from time_range) from (select time_range from prices where price = $price)""".query[Instant]
+    sql"""select time_range from prices where price = $price""".query[LocalDateTime]
 }

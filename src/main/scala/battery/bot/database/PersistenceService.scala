@@ -8,8 +8,7 @@ import cats.effect.IO
 import doobie.Transactor
 import doobie.implicits._
 
-import java.math.BigDecimal
-import java.time.Instant
+import java.time.{Instant, LocalDateTime}
 import java.util.UUID
 
 class PersistenceService(ta: Transactor[IO]) {
@@ -36,11 +35,11 @@ class PersistenceService(ta: Transactor[IO]) {
     getSettings(userName).unique.transact(ta)
 
   def getDeviceChargingTime(userName: UUID, deviceName: String): IO[Double] =
-    getChargingTime(userName: UUID, deviceName: String).unique.transact(ta)
+    getChargingTime(userName, deviceName).unique.transact(ta)
 
   def getPricesTime(time: Instant): IO[List[BigDecimal]] =
-    pricesTime(time: Instant).to[List].transact(ta)
+    pricesTime(time).to[List].transact(ta)
 
-  def getBestTime(price:BigDecimal, time: Instant): IO[Instant] =
-    getTime(price:BigDecimal, time: Instant).unique.transact(ta)
+  def getBestTime(price:BigDecimal, time: Instant): IO[LocalDateTime] =
+    getTime(price, time).unique.transact(ta)
 }
