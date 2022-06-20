@@ -42,7 +42,7 @@ object Main extends IOApp {
 
     def process(telegramClient: TelegramClient) = {
       val commandProcess = new CommandProcess(persistenceService, telegramClient)
-      val streamingProcess = new StreamingProcess(telegramClient, commandProcess)
+      val streamingProcess = new StreamingProcess(telegramClient)
       for {
         _    <- scraperProcess.getNewPrices
         //json <- telegramClient.telegramGetUpdate
