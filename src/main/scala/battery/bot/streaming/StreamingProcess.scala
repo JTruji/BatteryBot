@@ -20,10 +20,7 @@ class StreamingProcess(telegramClient: TelegramClient, commandProcess: CommandPr
       }
     )
       .flatMap(result => Stream.emits(result))
-      .evalMap(update =>
-  for {
-    lastJSON <- commandProcess.interpreter(update)
-  }yield (lastJSON))
+      .evalMap(update => commandProcess.interpreter(update))
 
   def streamProcess[A](getUpdates: Long => IO[(Long, A)]): Stream[IO, A] =
     Stream

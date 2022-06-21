@@ -9,238 +9,242 @@ import cats.implicits.toTraverseOps
 
 class CommandProcess(persistenceService: PersistenceService, telegramClient: TelegramClient) {
 
-  def userDevicesForDelete(result: Update): IO[Unit] = {
-    for {
-      userId      <- persistenceService.getUserID(result.message.from.username)
-      devicesList <- persistenceService.getUserDevicesName(userId)
-      _           <- deleteDevice(result, devicesList)
-    } yield ()
-  }
-
- def deleteDevice(result: Update, devicesList: List[String]): IO[Unit] ={
-   val data = result.message.text.split(";").toList.tail
-   data match {
-     case deviceName :: Nil if !devicesList.contains(deviceName) =>
-       telegramClient
-         .sendMessage(
-           result.message.chat.id,
-           "El usuario no tiene un dispositivo con ese nombre"
-         )
-         .void
-     case deviceName :: Nil if devicesList.contains(deviceName) =>
-       for {
-         userID <- persistenceService.getUserID(result.message.from.username)
-         _      <- persistenceService.removeDevice(userID, deviceName)
-         _ <- telegramClient
-           .sendMessage(
-             result.message.chat.id,
-             "El dispositivo se ha borrado correctamente."
-           )
-       } yield ()
-     case _ =>
-       telegramClient
-         .sendMessage(
-           result.message.chat.id,
-           "El formato del comando no es el adecuado"
-         )
-         .void
-   }
- }
-
+  //  START COMMAND //
   def startCommand(result: Update): IO[Unit] = {
     for {
-      _ <- persistenceService.addUser(result.message.from.username, 22, 6, false)
+      _ <- persistenceService.addUser(result.message.chat.id, 22, 6, true)
       _ <- telegramClient
         .sendMessage(
           result.message.chat.id,
-          "Se ha configurado por defecto que se acuesta a las 22:00, se levanta a las 06:00 y que no desea cargar dispositivos durante la noche. Para saber como puede modificar sus ajustes escriba /help"
+          "Se ha configurado por defecto que se acuesta a las 22:00, se levanta a las 06:00 y que desea cargar dispositivos durante la noche. Para saber como puede modificar sus ajustes escriba /help"
         )
     } yield ()
   }
 
-  def addDeviceCommand(result: Update, devicesList: List[String]): IO[Unit] = {
-    val data = result.message.text.split(";").toList.tail
-    data match {
-      case deviceName :: chargingTime :: Nil if devicesList.contains(deviceName) =>
-        telegramClient
-          .sendMessage(
-            result.message.chat.id,
-            "El usuario ya tiene un dispositivo con ese nombre, cambielo"
-          )
-          .void
-      case deviceName :: chargingTime :: Nil if !devicesList.contains(deviceName) =>
-        for {
-          userID <- persistenceService.getUserID(result.message.from.username)
-          _      <- persistenceService.addDevice(userID, deviceName, chargingTime.toDouble)
-          _ <- telegramClient
-            .sendMessage(
-              result.message.chat.id,
-              "El dispositivo se ha guardado correctamente."
-            )
-        } yield ()
-      case _ =>
-        telegramClient
-          .sendMessage(
-            result.message.chat.id,
-            "El formato del comando no es el adecuado"
-          )
-          .void
-    }
-  }
+  //def userDevicesForDelete(result: Update): IO[Unit] = {
+  //  for {
+  //    userId      <- persistenceService.getUserID(result.message.from.username)
+  //    devicesList <- persistenceService.getUserDevicesName(userId)
+  //    _           <- deleteDevice(result, devicesList)
+  //  } yield ()
+  //}
 
-  def sendSettings(sleepingTime: Int, wakeUpTime: Int, nightCharge: Boolean, result: Update): IO[Unit] = {
-    if (nightCharge) {
-      telegramClient
-        .sendMessage(
-          result.message.chat.id,
-          s"El usuario se levanta a las $sleepingTime, se acuesta a las $wakeUpTime y permite cargar durante la noche"
-        )
-        .void
-    } else {
-      telegramClient
-        .sendMessage(
-          result.message.chat.id,
-          s"El usuario se levanta a las $sleepingTime, se acuesta a las $wakeUpTime y no permite cargar durante la noche"
-        )
-        .void
-    }
-  }
+  //def deleteDevice(result: Update, devicesList: List[String]): IO[Unit] = {
+  //  val data = result.message.text.split(";").toList.tail
+  //  data match {
+  //    case deviceName :: Nil if !devicesList.contains(deviceName) =>
+  //      telegramClient
+  //        .sendMessage(
+  //          result.message.chat.id,
+  //          "El usuario no tiene un dispositivo con ese nombre"
+  //        )
+  //        .void
+  //    case deviceName :: Nil if devicesList.contains(deviceName) =>
+  //      for {
+  //        userID <- persistenceService.getUserID(result.message.from.username)
+  //        _      <- persistenceService.removeDevice(userID, deviceName)
+  //        _ <- telegramClient
+  //          .sendMessage(
+  //            result.message.chat.id,
+  //            "El dispositivo se ha borrado correctamente."
+  //          )
+  //      } yield ()
+  //    case _ =>
+  //      telegramClient
+  //        .sendMessage(
+  //          result.message.chat.id,
+  //          "El formato del comando no es el adecuado"
+  //        )
+  //        .void
+  //  }
+  //}
+  //
+  //def addDeviceCommand(result: Update, devicesList: List[String]): IO[Unit] = {
+  //  val data = result.message.text.split(";").toList.tail
+  //  data match {
+  //    case deviceName :: chargingTime :: Nil if devicesList.contains(deviceName) =>
+  //      telegramClient
+  //        .sendMessage(
+  //          result.message.chat.id,
+  //          "El usuario ya tiene un dispositivo con ese nombre, cambielo"
+  //        )
+  //        .void
+  //    case deviceName :: chargingTime :: Nil if !devicesList.contains(deviceName) =>
+  //      for {
+  //        userID <- persistenceService.getUserID(result.message.from.username)
+  //        _      <- persistenceService.addDevice(userID, deviceName, chargingTime.toDouble)
+  //        _ <- telegramClient
+  //          .sendMessage(
+  //            result.message.chat.id,
+  //            "El dispositivo se ha guardado correctamente."
+  //          )
+  //      } yield ()
+  //    case _ =>
+  //      telegramClient
+  //        .sendMessage(
+  //          result.message.chat.id,
+  //          "El formato del comando no es el adecuado"
+  //        )
+  //        .void
+  //  }
+  //}
 
-  def checkSettings(result: Update): IO[Unit] = {
-    for {
-      settingsList <- persistenceService.getUserSetting(result.message.from.username)
-      _            <- sendSettings(settingsList.sleepingTime, settingsList.wakeUpTime, settingsList.nightCharge, result)
-    } yield ()
-  }
+  //def sendSettings(sleepingTime: Int, wakeUpTime: Int, nightCharge: Boolean, result: Update): IO[Unit] = {
+  //  if (nightCharge) {
+  //    telegramClient
+  //      .sendMessage(
+  //        result.message.chat.id,
+  //        s"El usuario se levanta a las $sleepingTime, se acuesta a las $wakeUpTime y permite cargar durante la noche"
+  //      )
+  //      .void
+  //  } else {
+  //    telegramClient
+  //      .sendMessage(
+  //        result.message.chat.id,
+  //        s"El usuario se levanta a las $sleepingTime, se acuesta a las $wakeUpTime y no permite cargar durante la noche"
+  //      )
+  //      .void
+  //  }
+  //}
 
-  def updateSettings(result: Update): IO[Unit] = {
-    val data = result.message.text.split(";").toList.tail
-    data match {
-      case sleepingTime :: wakeUpTime :: nightCharge :: Nil
-          if sleepingTime.toIntOption.nonEmpty && wakeUpTime.toIntOption.nonEmpty && nightCharge.toBooleanOption.nonEmpty =>
-        for {
-          _ <- persistenceService
-            .updateUserSettings(
-              result.message.from.username,
-              sleepingTime.toInt,
-              wakeUpTime.toInt,
-              nightCharge.toBoolean
-            )
-          _ <- telegramClient
-            .sendMessage(
-              result.message.chat.id,
-              "El usuario ha sido actualizado"
-            )
-        } yield ()
-      case _ =>
-        for {
-          _ <- telegramClient
-            .sendMessage(
-              result.message.chat.id,
-              "El formato del comando no es el adecuado, por favor siga el siguiente => /editarConfiguracion;[Número];[Número];[true o false]"
-            )
-        } yield ()
-    }
-  }
+  //def checkSettings(result: Update): IO[Unit] = {
+  //  for {
+  //    settingsList <- persistenceService.getUserSetting(result.message.from.username)
+  //    _            <- sendSettings(settingsList.sleepingTime, settingsList.wakeUpTime, settingsList.nightCharge, result)
+  //  } yield ()
+  //}
 
-  def userDevices(result: Update): IO[Unit] = {
-    for {
-      userId      <- persistenceService.getUserID(result.message.from.username)
-      devicesList <- persistenceService.getUserDevicesName(userId)
-      _           <- updateDevice(result, devicesList)
-    } yield ()
-  }
+  //def updateSettings(result: Update): IO[Unit] = {
+  //  val data = result.message.text.split(";").toList.tail
+  //  data match {
+  //    case sleepingTime :: wakeUpTime :: nightCharge :: Nil
+  //        if sleepingTime.toIntOption.nonEmpty && wakeUpTime.toIntOption.nonEmpty && nightCharge.toBooleanOption.nonEmpty =>
+  //      for {
+  //        _ <- persistenceService
+  //          .updateUserSettings(
+  //            result.message.from.username,
+  //            sleepingTime.toInt,
+  //            wakeUpTime.toInt,
+  //            nightCharge.toBoolean
+  //          )
+  //        _ <- telegramClient
+  //          .sendMessage(
+  //            result.message.chat.id,
+  //            "El usuario ha sido actualizado"
+  //          )
+  //      } yield ()
+  //    case _ =>
+  //      for {
+  //        _ <- telegramClient
+  //          .sendMessage(
+  //            result.message.chat.id,
+  //            "El formato del comando no es el adecuado, por favor siga el siguiente => /editarConfiguracion;[Número];[Número];[true o false]"
+  //          )
+  //      } yield ()
+  //  }
+  //}
 
-  def userDevicesForAdd(result: Update): IO[Unit] = {
-    for {
-      userId      <- persistenceService.getUserID(result.message.from.username)
-      devicesList <- persistenceService.getUserDevicesName(userId)
-      _           <- addDeviceCommand(result, devicesList)
-    } yield ()
-  }
+  //def userDevices(result: Update): IO[Unit] = {
+  //  for {
+  //    userId      <- persistenceService.getUserID(result.message.from.username)
+  //    devicesList <- persistenceService.getUserDevicesName(userId)
+  //    _           <- updateDevice(result, devicesList)
+  //  } yield ()
+  //}
 
-  def updateDevice(result: Update, devicesList: List[String]): IO[Unit] = {
-    val data = result.message.text.split(";").toList.tail
-    data match {
-      case name :: chargingTime :: Nil if chargingTime.toDoubleOption.nonEmpty && devicesList.contains(name) =>
-        for {
-          userId <- persistenceService.getUserID(result.message.from.username)
-          _ <- persistenceService
-            .updateDeviceSettings(
-              name,
-              chargingTime.toDouble,
-              userId
-            )
-          _ <- telegramClient
-            .sendMessage(
-              result.message.chat.id,
-              "El dispositivo ha sido actualizado"
-            )
-        } yield ()
-      case name :: chargingTime :: Nil if !devicesList.contains(name) && devicesList.nonEmpty =>
-        telegramClient
-          .sendMessage(
-            result.message.chat.id,
-            s"El usuario no tiene ningún dispositivo con el nombre $name"
-          )
-          .void
-      case _ :: _ :: Nil if devicesList.isEmpty =>
-        telegramClient
-          .sendMessage(
-            result.message.chat.id,
-            s"El usuario no tiene ningún dispositivo"
-          )
-          .void
-      case _ =>
-        telegramClient
-          .sendMessage(
-            result.message.chat.id,
-            "El formato del comando no es el adecuado, por favor siga el siguiente => /editarDispositivo;[Nombre];[Tiempo de carga]"
-          )
-          .void
-    }
-  }
+  //def userDevicesForAdd(result: Update): IO[Unit] = {
+  //  for {
+  //    userId      <- persistenceService.getUserID(result.message.from.username)
+  //    devicesList <- persistenceService.getUserDevicesName(userId)
+  //    _           <- addDeviceCommand(result, devicesList)
+  //  } yield ()
+  //}
 
-  def interpreter(results: TelegramUpdate): IO[List[Unit]] = {
-    val updates = results {
-      case (
-            acc,
-            TelegramUpdate(
-              updateId,
-              Some(
-                TelegramMessage(
-                  messageId,
-                  Some(TelegramFrom(fromId, isBot, fromFirstName, Some(fromUsername), Some(_))),
-                  TelegramChat(chatId, Some(chatFirstName), Some(chatUsername), chatType),
-                  text
-                )
+  //def updateDevice(result: Update, devicesList: List[String]): IO[Unit] = {
+  //  val data = result.message.text.split(";").toList.tail
+  //  data match {
+  //    case name :: chargingTime :: Nil if chargingTime.toDoubleOption.nonEmpty && devicesList.contains(name) =>
+  //      for {
+  //        userId <- persistenceService.getUserID(result.message.from.username)
+  //        _ <- persistenceService
+  //          .updateDeviceSettings(
+  //            name,
+  //            chargingTime.toDouble,
+  //            userId
+  //          )
+  //        _ <- telegramClient
+  //          .sendMessage(
+  //            result.message.chat.id,
+  //            "El dispositivo ha sido actualizado"
+  //          )
+  //      } yield ()
+  //    case name :: chargingTime :: Nil if !devicesList.contains(name) && devicesList.nonEmpty =>
+  //      telegramClient
+  //        .sendMessage(
+  //          result.message.chat.id,
+  //          s"El usuario no tiene ningún dispositivo con el nombre $name"
+  //        )
+  //        .void
+  //    case _ :: _ :: Nil if devicesList.isEmpty =>
+  //      telegramClient
+  //        .sendMessage(
+  //          result.message.chat.id,
+  //          s"El usuario no tiene ningún dispositivo"
+  //        )
+  //        .void
+  //    case _ =>
+  //      telegramClient
+  //        .sendMessage(
+  //          result.message.chat.id,
+  //          "El formato del comando no es el adecuado, por favor siga el siguiente => /editarDispositivo;[Nombre];[Tiempo de carga]"
+  //        )
+  //        .void
+  //  }
+  //}
+
+  def interpreter(result: TelegramUpdate): IO[Unit] = {
+    result match {
+      case TelegramUpdate(
+            updateId,
+            Some(
+              TelegramMessage(
+                messageId,
+                Some(TelegramFrom(fromId, isBot, fromFirstName, _, _)),
+                TelegramChat(chatId, Some(chatFirstName), _, chatType),
+                text
               )
             )
           ) =>
-        acc :+ Update(
+        val update = Update(
           updateId,
           Message(
             messageId,
-            From(fromId, isBot, fromFirstName, fromUsername),
-            Chat(chatId, chatFirstName, chatUsername, chatType),
+            From(fromId, isBot, fromFirstName),
+            Chat(chatId, chatFirstName, chatType),
             text
           )
         )
-      case (acc, _) => acc
+
+        val telegramMessage = (update, update.message.text)
+
+        telegramMessage match {
+          case (update, message) if message.startsWith("/start") => startCommand(update)
+          //case (update, message) if message.startsWith("/addDevice")           => userDevicesForAdd(update)
+          //case (update, message) if message.startsWith("/borrarDispositivo")   => userDevicesForDelete(update)
+          //case (update, message) if message.startsWith("/verConfiguracion")    => checkSettings(update)
+          //case (update, message) if message.startsWith("/editarConfiguracion") => updateSettings(update)
+          //case (update, message) if message.startsWith("/editarDispositivo")   => userDevices(update)
+          case (update, message) if message.startsWith("/help") =>
+            telegramClient.sendMessage(
+              update.message.chat.id,
+              "Esto bot le ayudará a ahorrar dinero buscando las horas más baratas para cargar dispositivos eléctricos para usar este bot dispone de los siguientes comandos:" +
+                "/nuevoDispositivo"
+            )
+          case (update, message) =>
+            telegramClient.sendMessage(update.message.chat.id, s"No se ha detectado ningún comando: $message")
+        }
+      case _ => IO.unit
     }
 
-    val telegramMessages = updates.map(up => (up, up.message.text))
-
-    telegramMessages.traverse {
-      case (update, message) if message.startsWith("/start")               => startCommand(update)
-      case (update, message) if message.startsWith("/addDevice")           => userDevicesForAdd(update)
-      case (update, message) if message.startsWith("/borrarDispositivo")   => userDevicesForDelete(update)
-      case (update, message) if message.startsWith("/verConfiguracion")    => checkSettings(update)
-      case (update, message) if message.startsWith("/editarConfiguracion") => updateSettings(update)
-      case (update, message) if message.startsWith("/editarDispositivo")   => userDevices(update)
-      case (update, message) if message.startsWith("/help")                => telegramClient.sendMessage(update.message.chat.id, "WIP")
-      case (update, message) =>
-        telegramClient.sendMessage(update.message.chat.id, s"No se ha detectado ningún comando: $message")
-    }
   }
 }

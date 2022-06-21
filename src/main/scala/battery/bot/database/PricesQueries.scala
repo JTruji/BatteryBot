@@ -4,7 +4,6 @@ import doobie.implicits._
 import doobie.postgres.implicits._
 import doobie.util.update.Update
 
-import java.math.BigDecimal
 import java.time.Instant
 
 object PricesQueries {

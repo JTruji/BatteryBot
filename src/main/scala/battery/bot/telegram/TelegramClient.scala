@@ -13,7 +13,7 @@ class TelegramClient(client: Client[IO], telegramToken: String) {
   def telegramGetMe: IO[TelegramResult[TelegramUpdate]] = {
     client
       .expect[TelegramResult[TelegramUpdate]](
-        telegramUri  / "getMe"
+        telegramUri / "getMe"
       )
       .flatTap(hj => IO(println(hj)))
   }
@@ -50,7 +50,7 @@ class TelegramClient(client: Client[IO], telegramToken: String) {
       .flatTap(hj => IO(println(hj)))
   }
 
-  def sendMessage(chatId: Long, text: String): IO[Boolean] = {
+  def sendMessage(chatId: Long, text: String) = {
     client
       .successful(
         Request[IO](
@@ -60,6 +60,7 @@ class TelegramClient(client: Client[IO], telegramToken: String) {
             .withQueryParam("text", text)
         )
       )
+      .void
       .flatTap(hj => IO(println(s"sendMessage: $hj")))
   }
 }
