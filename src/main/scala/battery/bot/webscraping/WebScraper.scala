@@ -8,7 +8,7 @@ import java.time._
 object Scraper {
   val doc = Jsoup.connect("https://tarifaluzhora.es")
 
-  def scraperPrice: IO[List[(Instant, BigDecimal)]] = IO{
+  def scraperPrice: IO[List[(Instant, BigDecimal)]] = IO {
     val priceList = doc
       .get()
       .getElementsByAttributeValue("itemprop", "price")
