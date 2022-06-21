@@ -24,18 +24,21 @@ class PersistenceService(ta: Transactor[IO]) {
   def removeDevice(userId: UUID, deviceName: String): IO[Int] =
     deleteDevice(userId, deviceName).run.transact(ta)
 
-  def updateUserSettings(chatId:Long, sleepingTime: Int, wakeupTime: Int, nightCharge: Boolean): IO[Int] =
-    updateSettings(chatId, sleepingTime, wakeupTime, nightCharge).run.transact(ta)
+  def updateUserSettings(userUUID:UUID, sleepingTime: Int, wakeupTime: Int, nightCharge: Boolean): IO[Int] =
+    updateSettings(userUUID, sleepingTime, wakeupTime, nightCharge).run.transact(ta)
 
-  def updateDeviceSettings(name: String, chargingTime: Double, userName: UUID): IO[Int] =
-    updateChargingTime(name, chargingTime, userName).run.transact(ta)
+  def updateDeviceSettings(name: String, chargingTime: Double, userUUID: UUID): IO[Int] =
+    updateChargingTime(name, chargingTime, userUUID).run.transact(ta)
 
-  def getUserID(chatId:Long): IO[UUID] =
-    getUserUUID(chatId).unique.transact(ta)
+  //def getUserID(chatId:Long): IO[UUID] =
+  //  getUserUUID(chatId).unique.transact(ta)
 
-  def getUserSetting(chatId:Long): IO[UserSettings] =
-    getSettings(chatId).unique.transact(ta)
+  def getUserUUID(chatId:Long): IO[UUID] =
+    getUserId(chatId).unique.transact(ta)
 
-  //def getUserDevicesName(chatId:Long): IO[List[String]] =
-  //  userDevicesName(chatId).to[List].transact(ta)
+  def getUserSetting(userUUID: UUID): IO[UserSettings] =
+    getSettings(userUUID).unique.transact(ta)
+
+  def getUserDevicesName(userUUID:UUID): IO[List[String]] =
+    userDevicesName(userUUID).to[List].transact(ta)
 }

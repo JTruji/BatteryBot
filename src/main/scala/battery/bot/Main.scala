@@ -43,9 +43,7 @@ object Main extends IOApp {
       val streamingProcess = new StreamingProcess(telegramClient, commandProcess)
       for {
         _ <- scraperProcess.getNewPrices
-        //json <- telegramClient.telegramGetUpdate
         _ <- streamingProcess.process.compile.drain
-        //_    <- commandProcess.interpreter(streamingJson)
       } yield ExitCode.Success
     }
 

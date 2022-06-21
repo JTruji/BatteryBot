@@ -2,9 +2,8 @@ package battery.bot
 import battery.bot.core.CommandProcess
 import battery.bot.telegram.TelegramClient
 import battery.bot.telegram.models.TelegramUpdate
-import cats.effect.{ExitCode, IO}
+import cats.effect.IO
 import fs2.Stream
-import org.log4s.MDC.result
 
 import scala.concurrent.duration.DurationInt
 class StreamingProcess(telegramClient: TelegramClient, commandProcess: CommandProcess) {
@@ -12,7 +11,6 @@ class StreamingProcess(telegramClient: TelegramClient, commandProcess: CommandPr
   def process[TelegramClient]: Stream[IO, Unit] =
     streamProcess[List[TelegramUpdate]](lastUpdateId =>
       telegramClient.telegramGetUpdate.map { result =>
-        //handle empty list
         val newLastUpdateId =
           result.result.map(_.updateId).maxOption.getOrElse(lastUpdateId)
         val filteredUpdates = result.result.filter(_.updateId > lastUpdateId)
@@ -29,5 +27,4 @@ class StreamingProcess(telegramClient: TelegramClient, commandProcess: CommandPr
         getUpdates(startPoint)
       }
       .map(_._2)
-
 }
