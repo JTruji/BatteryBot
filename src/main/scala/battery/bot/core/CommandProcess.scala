@@ -210,7 +210,80 @@ class CommandProcess(persistenceService: PersistenceService, telegramClient: Tel
     } yield ()
   }
 
-  // CALCULAR COMMAND //
+  // CALCULATE COMMAND //
+  def calculateCommandTrue(sleepingTime: Int, wakeUpTime: Int, result: Update): IO[Unit] = {
+    telegramClient
+      .sendMessage(
+        result.message.chat.id,
+        "El usuario no tiene ningún dispositivo con el nombre"
+      )
+      .void
+  }
+
+  def calculateCommandFalse(result: Update): IO[Unit] ={
+    telegramClient
+      .sendMessage(
+        result.message.chat.id,
+        "El usuario no tiene ningún dispositivo con el nombre"
+      )
+      .void
+  }
+
+  def calculateCommandFormat(
+      userUUID: UUID,
+      devicesList: List[String],
+      sleepingTime: Int,
+      wakeUpTime: Int,
+      nightCharge: Boolean,
+      result: Update
+  ): IO[Unit] = {
+    val data = result.message.text.split(";").toList.tail
+    data match {
+      case deviceName :: Nil
+        if deviceName.nonEmpty && devicesList.contains(deviceName) && nightCharge =>
+        calculateCommandTrue(sleepingTime, wakeUpTime, result)
+      case deviceName :: Nil
+        if deviceName.nonEmpty && devicesList.contains(deviceName) && !nightCharge =>
+        calculateCommandFalse(result)
+      case deviceName :: Nil if !devicesList.contains(deviceName) && devicesList.nonEmpty =>
+        telegramClient
+          .sendMessage(
+            result.message.chat.id,
+            s"El usuario no tiene ningún dispositivo con el nombre $deviceName"
+          )
+          .void
+      case _ :: Nil if devicesList.isEmpty =>
+        telegramClient
+          .sendMessage(
+            result.message.chat.id,
+            "El usuario no tiene ningún dispositivo, emplee el comando /nuevoDispositivo;[Nombre del dispositivo];[Tiempo carga] para añadir uno"
+          )
+          .void
+      case _ =>
+        telegramClient
+          .sendMessage(
+            result.message.chat.id,
+            "El formato del comando no es el adecuado, por favor siga el siguiente => /calcular;[Nombre del dispositivo]"
+          )
+          .void
+    }
+  }
+
+  def calculateCommand(result: Update): IO[Unit] = {
+    for {
+      userUUID     <- persistenceService.getUserUUID(result.message.chat.id)
+      devicesList  <- persistenceService.getUserDevicesName(userUUID)
+      settingsList <- persistenceService.getUserSetting(userUUID)
+      _ <- calculateCommandFormat(
+        userUUID,
+        devicesList,
+        settingsList.sleepingTime,
+        settingsList.wakeUpTime,
+        settingsList.nightCharge,
+        result
+      )
+    } yield ()
+  }
 
   // INTERPRETER //
   def interpreter(result: TelegramUpdate): IO[Unit] = {
@@ -246,6 +319,7 @@ class CommandProcess(persistenceService: PersistenceService, telegramClient: Tel
           case (update, message) if message.toLowerCase.startsWith("/nuevodispositivo")  => newDeviceCommand(update)
           case (update, message) if message.toLowerCase.startsWith("/editardispositivo") => editDeviceCommand(update)
           case (update, message) if message.toLowerCase.startsWith("/borrardispositivo") => deleteDeviceCommand(update)
+          case (update, message) if message.toLowerCase.startsWith("/calcular")          => calculateCommand(update)
           case (update, message) if message.toLowerCase.startsWith("/help") =>
             telegramClient.sendMessage(
               update.message.chat.id,
