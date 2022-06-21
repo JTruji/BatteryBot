@@ -173,7 +173,7 @@ class CommandProcess(persistenceService: PersistenceService, telegramClient: Tel
   }
 
   // DELETE DEVICE COMMAND //
-  def deleteDevice(result: Update, userUUID:UUID, devicesList: List[String]): IO[Unit] = {
+  def deleteDevice(result: Update, userUUID: UUID, devicesList: List[String]): IO[Unit] = {
     val data = result.message.text.split(";").toList.tail
     data match {
       case deviceName :: Nil if !devicesList.contains(deviceName) =>
@@ -185,7 +185,7 @@ class CommandProcess(persistenceService: PersistenceService, telegramClient: Tel
           .void
       case deviceName :: Nil if devicesList.contains(deviceName) =>
         for {
-          _      <- persistenceService.removeDevice(userUUID, deviceName)
+          _ <- persistenceService.removeDevice(userUUID, deviceName)
           _ <- telegramClient
             .sendMessage(
               result.message.chat.id,
@@ -239,12 +239,13 @@ class CommandProcess(persistenceService: PersistenceService, telegramClient: Tel
         val telegramMessage = (update, update.message.text)
 
         telegramMessage match {
-          case (update, message) if message.toLowerCase.startsWith("/start")               => startCommand(update)
-          case (update, message) if message.toLowerCase.startsWith("/verconfiguracion")    => checkSettingsCommand(update)
-          case (update, message) if message.toLowerCase.startsWith("/editarconfiguracion") => updateSettingsCommand(update)
-          case (update, message) if message.toLowerCase.startsWith("/nuevodispositivo")    => newDeviceCommand(update)
-          case (update, message) if message.toLowerCase.startsWith("/editardispositivo")   => editDeviceCommand(update)
-          case (update, message) if message.toLowerCase.startsWith("/borrardispositivo")   => deleteDeviceCommand(update)
+          case (update, message) if message.toLowerCase.startsWith("/start")            => startCommand(update)
+          case (update, message) if message.toLowerCase.startsWith("/verconfiguracion") => checkSettingsCommand(update)
+          case (update, message) if message.toLowerCase.startsWith("/editarconfiguracion") =>
+            updateSettingsCommand(update)
+          case (update, message) if message.toLowerCase.startsWith("/nuevodispositivo")  => newDeviceCommand(update)
+          case (update, message) if message.toLowerCase.startsWith("/editardispositivo") => editDeviceCommand(update)
+          case (update, message) if message.toLowerCase.startsWith("/borrardispositivo") => deleteDeviceCommand(update)
           case (update, message) if message.toLowerCase.startsWith("/help") =>
             telegramClient.sendMessage(
               update.message.chat.id,
