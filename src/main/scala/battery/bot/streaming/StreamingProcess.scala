@@ -22,7 +22,7 @@ class StreamingProcess(telegramClient: TelegramClient, commandProcess: CommandPr
 
   def streamProcess[A](getUpdates: Long => IO[(Long, A)]): Stream[IO, A] =
     Stream
-      .awakeDelay[IO](2.seconds)
+      .awakeDelay[IO](3.seconds)
       .evalMapAccumulate(0L) { (startPoint, _) =>
         getUpdates(startPoint)
       }

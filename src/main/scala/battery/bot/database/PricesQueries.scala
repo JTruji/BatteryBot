@@ -14,13 +14,12 @@ object PricesQueries {
     sql"""select price from prices where time_range > $time"""
       .query[BigDecimal]
 
-  def pricesTimeFalse(time: Instant, weakUpTime: Instant, sleepingTime: Instant): doobie.Query0[BigDecimal] =
-    {
-      println(s"$weakUpTime , $sleepingTime")
-      sql"""select price from prices where time_range between $weakUpTime and $sleepingTime and time_range > $time """
-        .query[BigDecimal]
-    }
+  def pricesTimeFalse(time: Instant, weakUpTime: Instant, sleepingTime: Instant): doobie.Query0[BigDecimal] = {
+    println(s"$weakUpTime , $sleepingTime")
+    sql"""select price from prices where time_range between $weakUpTime and $sleepingTime and time_range > $time """
+      .query[BigDecimal]
+  }
 
-  def lowerPriceTime(price:BigDecimal, time: Instant): doobie.Query0[LocalDateTime] =
+  def lowerPriceTime(price: BigDecimal, time: Instant): doobie.Query0[LocalDateTime] =
     sql"""select time_range from prices where price = $price""".query[LocalDateTime]
 }

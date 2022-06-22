@@ -61,6 +61,6 @@ class TelegramClient(client: Client[IO], telegramToken: String) {
         )
       )
       .void
-      //.flatTap(hj => IO(println(s"sendMessage: $hj")))
+    //.flatTap(hj => IO(println(s"sendMessage: $hj")))
   }
 }
