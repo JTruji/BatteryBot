@@ -40,7 +40,7 @@ class PersistenceService(ta: Transactor[IO]) {
   def getUserDevicesName(userUUID: UUID): IO[List[String]] =
     userDevicesName(userUUID).to[List].transact(ta)
 
-  def getDeviceChargingTime(userUUID: UUID, deviceName: String): IO[String] =
+  def getDeviceChargingTime(userUUID: UUID, deviceName: String): IO[Double] =
     deviceChargingTime(userUUID, deviceName).unique.transact(ta)
 
   def getLowerPriceTime(price: BigDecimal, time: Instant): IO[LocalDateTime] =
