@@ -7,6 +7,7 @@ import battery.bot.telegram.models.{TelegramChat, TelegramFrom, TelegramMessage,
 import cats.effect.IO
 import cats.implicits.toTraverseOps
 
+import java.time.Instant
 import java.util.UUID
 
 class CommandProcess(persistenceService: PersistenceService, telegramClient: TelegramClient) {
@@ -211,23 +212,99 @@ class CommandProcess(persistenceService: PersistenceService, telegramClient: Tel
   }
 
   // CALCULATE COMMAND //
-  def calculateCommandTrue(sleepingTime: Int, wakeUpTime: Int, result: Update): IO[Unit] = {
+  def notEnoughTime(hour: Int, totalHour: Int, result: Update): IO[Unit] = {
+    val chargePercentage = 100 * hour / totalHour
     telegramClient
       .sendMessage(
         result.message.chat.id,
-        "El usuario no tiene ningún dispositivo con el nombre"
+        s"No quedan suficientes horas para cargar por completo el dispositivo, si lo conecta ahora a las 0:00 estará aproximadamente al $chargePercentage%"
       )
-      .void
   }
 
-  def calculateCommandFalse(result: Update): IO[Unit] ={
-    telegramClient
-      .sendMessage(
-        result.message.chat.id,
-        "El usuario no tiene ningún dispositivo con el nombre"
-      )
-      .void
+  def calculateCommandMessage(result: Update, firstPrice: BigDecimal): IO[Unit] = {
+    for {
+      time <- persistenceService.getLowerPriceTime(firstPrice, Instant.now())
+      _ <- telegramClient
+        .sendMessage(
+          result.message.chat.id,
+          s"El mejor momento para cargar el dispositivo es desde las ${time.getHour} con un precio de $firstPrice"
+        )
+    } yield ()
   }
+
+  def calculateCommand(
+      chargingTime: Double,
+      priceList: List[BigDecimal],
+      result: Update,
+      minorPrice: List[BigDecimal]
+  ): IO[Unit] = {
+    val priceListFilter       = priceList.take(chargingTime.intValue)
+    val priceListFilterSum    = priceListFilter.sum
+    val newPriceList          = priceList.tail
+    val newPriceListFilter    = newPriceList.take(chargingTime.intValue)
+    val newPriceListFilterSum = newPriceListFilter.sum
+    println("\n")
+    println(priceListFilter)
+    println(priceListFilterSum)
+    println(newPriceList)
+    println(newPriceListFilter)
+    println(newPriceListFilterSum)
+    if (
+      (priceListFilterSum < newPriceListFilterSum) & (newPriceList.length > chargingTime.intValue) & (priceListFilterSum < minorPrice.sum)
+    ) {
+      println("He entrado en el primero")
+      calculateCommand(chargingTime, newPriceList, result, priceListFilter)
+    } else if ((newPriceList.length == chargingTime.intValue) & (minorPrice.sum < newPriceListFilterSum)) {
+      println("He entrado en el segundo")
+      calculateCommandMessage(result, minorPrice.head)
+    } else if ((newPriceList.length == chargingTime.intValue) & (minorPrice.sum > newPriceListFilterSum)) {
+      // Todavia no ha entrado aquí
+      println("He entrado en el tercero")
+      calculateCommandMessage(result, newPriceListFilter.head)
+    } else if (newPriceList.length < chargingTime.intValue) {
+      notEnoughTime(newPriceList.length, chargingTime.intValue, result)
+    } else {
+      println("He entrado en el cuarto")
+      calculateCommand(chargingTime, newPriceList, result, minorPrice)
+    }
+  }
+
+  //def calculateCommandFalse(
+  //  chargingTime: Double,
+  //  priceList: List[BigDecimal],
+  //  result: Update,
+  //  minorPrice: List[BigDecimal]
+  //): IO[Unit] = {
+  //  val priceListFilter       = priceList.take(chargingTime.intValue)
+  //  val priceListFilterSum    = priceListFilter.sum
+  //  val newPriceList          = priceList.tail
+  //  val newPriceListFilter    = newPriceList.take(chargingTime.intValue)
+  //  val newPriceListFilterSum = newPriceListFilter.sum
+  //  println("\n")
+  //  println(priceListFilter)
+  //  println(priceListFilterSum)
+  //  println(newPriceList)
+  //  println(newPriceListFilter)
+  //  println(newPriceListFilterSum)
+  //  if (
+  //    (priceListFilterSum < newPriceListFilterSum) & (newPriceList.length > chargingTime.intValue) & (priceListFilterSum < minorPrice.sum)
+  //  ) {
+  //    println("He entrado en el primero")
+  //    calculateCommandTrue(chargingTime, newPriceList, result, priceListFilter)
+  //  } else if ((newPriceList.length == chargingTime.intValue) & (minorPrice.sum < newPriceListFilterSum)) {
+  //    println("He entrado en el segundo")
+  //    calculateCommandMessageTrue(result, minorPrice.head)
+  //  } else if ((newPriceList.length == chargingTime.intValue) & (minorPrice.sum > newPriceListFilterSum)) {
+  //    // Todavia no ha entrado aquí
+  //    println("He entrado en el tercero")
+  //    calculateCommandMessageTrue(result, newPriceListFilter.head)
+  //  } else if (newPriceList.length < chargingTime.intValue) {
+  //    notEnoughTimeTrue(newPriceList.length, chargingTime.intValue, result)
+  //  } else {
+  //    println("He entrado en el cuarto")
+  //    calculateCommandTrue(chargingTime, newPriceList, result, minorPrice)
+  //  }
+  //}
 
   def calculateCommandFormat(
       userUUID: UUID,
@@ -239,12 +316,21 @@ class CommandProcess(persistenceService: PersistenceService, telegramClient: Tel
   ): IO[Unit] = {
     val data = result.message.text.split(";").toList.tail
     data match {
-      case deviceName :: Nil
-        if deviceName.nonEmpty && devicesList.contains(deviceName) && nightCharge =>
-        calculateCommandTrue(sleepingTime, wakeUpTime, result)
-      case deviceName :: Nil
-        if deviceName.nonEmpty && devicesList.contains(deviceName) && !nightCharge =>
-        calculateCommandFalse(result)
+      case deviceName :: Nil if deviceName.nonEmpty && devicesList.contains(deviceName) && nightCharge =>
+        for {
+          chargingTime <- persistenceService.getDeviceChargingTime(userUUID, deviceName)
+          pricesList   <- persistenceService.getPricesTimeTrue(Instant.now())
+          _ = println(pricesList)
+          _ <- calculateCommand(chargingTime.toDouble, pricesList, result, List(24))
+        } yield ()
+      case deviceName :: Nil if deviceName.nonEmpty && devicesList.contains(deviceName) && !nightCharge =>
+        for {
+          chargingTime    <- persistenceService.getDeviceChargingTime(userUUID, deviceName)
+          pricesListFalse <- persistenceService.getPricesTimeFalse(Instant.now(), wakeUpTime, sleepingTime)
+          _ = println(pricesListFalse)
+          _ = println("He entrado en el false")
+          _ <- calculateCommand(chargingTime.toDouble, pricesListFalse, result, List(24))
+        } yield ()
       case deviceName :: Nil if !devicesList.contains(deviceName) && devicesList.nonEmpty =>
         telegramClient
           .sendMessage(
@@ -319,7 +405,7 @@ class CommandProcess(persistenceService: PersistenceService, telegramClient: Tel
           case (update, message) if message.toLowerCase.startsWith("/nuevodispositivo")  => newDeviceCommand(update)
           case (update, message) if message.toLowerCase.startsWith("/editardispositivo") => editDeviceCommand(update)
           case (update, message) if message.toLowerCase.startsWith("/borrardispositivo") => deleteDeviceCommand(update)
-          case (update, message) if message.toLowerCase.startsWith("/calcular")          => calculateCommand(update)
+          case (update, message) if message.toLowerCase.startsWith("/calcular") => calculateCommand(update)
           case (update, message) if message.toLowerCase.startsWith("/help") =>
             telegramClient.sendMessage(
               update.message.chat.id,
