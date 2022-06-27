@@ -3,6 +3,7 @@ package battery.bot.database
 import battery.bot.core.models.UserSettings
 import battery.bot.database.DevicesQueries._
 import battery.bot.database.UsersQueries._
+import battery.bot.database.UpdateIDQueries._
 import cats.effect.IO
 import doobie.Transactor
 import doobie.implicits._
@@ -38,4 +39,10 @@ class PersistenceService(ta: Transactor[IO]) {
 
   def getUserDevicesName(userUUID: UUID): IO[List[String]] =
     userDevicesName(userUUID).to[List].transact(ta)
+
+  def updateTelegramUpdate(updateID: Long): IO[Int] =
+    updateUpdateID(updateID, Instant.now()).run.transact(ta)
+
+  def getLastUpdateId =
+    getUpdateID.unique.transact(ta)
 }
