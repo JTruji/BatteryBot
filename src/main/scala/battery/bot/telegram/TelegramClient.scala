@@ -50,7 +50,7 @@ class TelegramClient(client: Client[IO], telegramToken: String) {
       .flatTap(hj => IO(println(hj)))
   }
 
-  def sendMessage(chatId: Long, text: String) = {
+  def sendMessage(chatId: Long, text: String): IO[Unit] = {
     client
       .successful(
         Request[IO](
@@ -61,6 +61,6 @@ class TelegramClient(client: Client[IO], telegramToken: String) {
         )
       )
       .void
-      .flatTap(hj => IO(println(s"sendMessage: $hj")))
+    //.flatTap(hj => IO(println(s"sendMessage: $hj")))
   }
 }

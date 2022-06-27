@@ -7,6 +7,7 @@ import battery.bot.telegram.models.{TelegramChat, TelegramFrom, TelegramMessage,
 import cats.effect.IO
 import cats.implicits.toTraverseOps
 
+import java.time.Instant
 import java.util.UUID
 
 class CommandProcess(persistenceService: PersistenceService, telegramClient: TelegramClient) {
@@ -151,7 +152,7 @@ class CommandProcess(persistenceService: PersistenceService, telegramClient: Tel
         telegramClient
           .sendMessage(
             result.message.chat.id,
-            "El usuario no tiene ningún dispositivo, emplee el comando /nuevoDispositivo;[Nombre del dispositivo];[Tiempo carga] para añadir uno"
+            "El usuario no tiene ningún dispositivo, emplee el comando /nuevoDispositivo;[Nombre del dispositivo];[Tiempo de carga] para añadir uno"
           )
           .void
       case _ =>
@@ -170,6 +171,19 @@ class CommandProcess(persistenceService: PersistenceService, telegramClient: Tel
       devicesList <- persistenceService.getUserDevicesName(userUUID)
       _           <- updateDevice(result, userUUID, devicesList)
     } yield (userUUID, devicesList)
+  }
+
+  // CHECK DEVICES COMMAND
+  def checkDevicesCommand(result: Update): IO[Unit] = {
+    for {
+      userUUID    <- persistenceService.getUserUUID(result.message.chat.id)
+      devicesList <- persistenceService.getUserDevicesName(userUUID)
+      _ <- telegramClient
+        .sendMessage(
+          result.message.chat.id,
+          s"Dispone de los siguientes dispositivos: \n ${devicesList.mkString("\n")}"
+        )
+    } yield ()
   }
 
   // DELETE DEVICE COMMAND //
@@ -211,22 +225,61 @@ class CommandProcess(persistenceService: PersistenceService, telegramClient: Tel
   }
 
   // CALCULATE COMMAND //
-  def calculateCommandTrue(sleepingTime: Int, wakeUpTime: Int, result: Update): IO[Unit] = {
+  def notEnoughTime(hour: Int, totalHour: Int, result: Update): IO[Unit] = {
+    val chargePercentage = 100 * hour / totalHour
     telegramClient
       .sendMessage(
         result.message.chat.id,
-        "El usuario no tiene ningún dispositivo con el nombre"
+        s"No quedan suficientes horas para cargar por completo el dispositivo, si lo conecta ahora a las 0:00 estará aproximadamente al $chargePercentage%"
       )
-      .void
   }
 
-  def calculateCommandFalse(result: Update): IO[Unit] ={
-    telegramClient
-      .sendMessage(
-        result.message.chat.id,
-        "El usuario no tiene ningún dispositivo con el nombre"
-      )
-      .void
+  def calculateCommandMessage(result: Update, firstPrice: BigDecimal): IO[Unit] = {
+    for {
+      time <- persistenceService.getLowerPriceTime(firstPrice, Instant.now())
+      _ <- telegramClient
+        .sendMessage(
+          result.message.chat.id,
+          s"El mejor momento para cargar el dispositivo es desde las ${time.getHour} con un precio de $firstPrice"
+        )
+    } yield ()
+  }
+
+  def calculateCommand(
+      chargingTime: Double,
+      priceList: List[BigDecimal],
+      result: Update,
+      minorPrice: List[BigDecimal]
+  ): IO[Unit] = {
+    val priceListFilter       = priceList.take(chargingTime.intValue)
+    val priceListFilterSum    = priceListFilter.sum
+    val newPriceList          = priceList.tail
+    val newPriceListFilter    = newPriceList.take(chargingTime.intValue)
+    val newPriceListFilterSum = newPriceListFilter.sum
+    println("\n")
+    println(priceListFilter)
+    println(priceListFilterSum)
+    println(newPriceList)
+    println(newPriceListFilter)
+    println(newPriceListFilterSum)
+    if (
+      (priceListFilterSum < newPriceListFilterSum) & (newPriceList.length > chargingTime.intValue) & (priceListFilterSum < minorPrice.sum)
+    ) {
+      println("He entrado en el primero")
+      calculateCommand(chargingTime, newPriceList, result, priceListFilter)
+    } else if ((newPriceList.length == chargingTime.intValue) & (minorPrice.sum < newPriceListFilterSum)) {
+      println("He entrado en el segundo")
+      calculateCommandMessage(result, minorPrice.head)
+    } else if ((newPriceList.length == chargingTime.intValue) & (minorPrice.sum > newPriceListFilterSum)) {
+      // Todavia no ha entrado aquí
+      println("He entrado en el tercero")
+      calculateCommandMessage(result, newPriceListFilter.head)
+    } else if (newPriceList.length < chargingTime.intValue) {
+      notEnoughTime(newPriceList.length, chargingTime.intValue, result)
+    } else {
+      println("He entrado en el cuarto")
+      calculateCommand(chargingTime, newPriceList, result, minorPrice)
+    }
   }
 
   def calculateCommandFormat(
@@ -239,12 +292,21 @@ class CommandProcess(persistenceService: PersistenceService, telegramClient: Tel
   ): IO[Unit] = {
     val data = result.message.text.split(";").toList.tail
     data match {
-      case deviceName :: Nil
-        if deviceName.nonEmpty && devicesList.contains(deviceName) && nightCharge =>
-        calculateCommandTrue(sleepingTime, wakeUpTime, result)
-      case deviceName :: Nil
-        if deviceName.nonEmpty && devicesList.contains(deviceName) && !nightCharge =>
-        calculateCommandFalse(result)
+      case deviceName :: Nil if deviceName.nonEmpty && devicesList.contains(deviceName) && nightCharge =>
+        for {
+          chargingTime <- persistenceService.getDeviceChargingTime(userUUID, deviceName)
+          pricesList   <- persistenceService.getPricesTimeTrue(Instant.now())
+          _ = println(pricesList)
+          _ <- calculateCommand(chargingTime.toDouble, pricesList, result, List(24))
+        } yield ()
+      case deviceName :: Nil if deviceName.nonEmpty && devicesList.contains(deviceName) && !nightCharge =>
+        for {
+          chargingTime    <- persistenceService.getDeviceChargingTime(userUUID, deviceName)
+          pricesListFalse <- persistenceService.getPricesTimeFalse(Instant.now(), wakeUpTime, sleepingTime)
+          _ = println(pricesListFalse)
+          _ = println("He entrado en el false")
+          _ <- calculateCommand(chargingTime.toDouble, pricesListFalse, result, List(24))
+        } yield ()
       case deviceName :: Nil if !devicesList.contains(deviceName) && devicesList.nonEmpty =>
         telegramClient
           .sendMessage(
@@ -318,18 +380,20 @@ class CommandProcess(persistenceService: PersistenceService, telegramClient: Tel
             updateSettingsCommand(update)
           case (update, message) if message.toLowerCase.startsWith("/nuevodispositivo")  => newDeviceCommand(update)
           case (update, message) if message.toLowerCase.startsWith("/editardispositivo") => editDeviceCommand(update)
+          case (update, message) if message.toLowerCase.startsWith("/verdispositivos")   => checkDevicesCommand(update)
           case (update, message) if message.toLowerCase.startsWith("/borrardispositivo") => deleteDeviceCommand(update)
           case (update, message) if message.toLowerCase.startsWith("/calcular")          => calculateCommand(update)
           case (update, message) if message.toLowerCase.startsWith("/help") =>
             telegramClient.sendMessage(
               update.message.chat.id,
               "Esto bot le ayudará a ahorrar dinero buscando las horas más baratas para cargar dispositivos eléctricos para usar este bot dispone de los siguientes comandos:" +
-                "\n/nuevoDispositivo ???" +
-                "\n/editarDispositivo ???" +
-                "\n/borrarDispositivo ???" +
-                "\n/verConfiguracion ???" +
-                "\n/editarConfiguracion ???" +
-                "\n/calcular ???"
+                "\n/nuevoDispositivo le permitirá añadir un nuevo dispositivo a su usuario, el formato del comando es el siguiente: /nuevoDispositivo;[Nombre del dispositivo];[Tiempo de carga]" +
+                "\n/editarDispositivo le permitirá modificar las características de uno de sus dispositivos, el formato del comando es el siguiente: /editarDispositivo;[Nombre del dispositivo];[Tiempo de carga]" +
+                "\n/verDispositivos le permitirá ver todos sus dispositivos, el formato del comando es el siguiente: /verDispositivos" +
+                "\n/borrarDispositivo le permitirá borrar uno de sus dispositivos, el formato del comando es el siguiente: /borrarDispositivo:[Nombre del dispositivo]" +
+                "\n/verConfiguracion le permitirá ver la configuración de su usuario, el formato es el siguiente: /verConfiguracion" +
+                "\n/editarConfiguracion le permitirá editar la configuración de su usuario, el formato es el siguiente: /editarConfiguracion;[Hora a la que se acuesta],[Hora a la que se levanta],[true o false, dependiendo si desea cargar durante la noche]" +
+                "\n/calcular le informará de la hora a la quer debe conectar el dispositivo para ahorra el máximo posible en su factura de la luz, el formato es el siguiente: /calcular;[Nombre del dispositivo]"
             )
           case (update, message) =>
             telegramClient.sendMessage(update.message.chat.id, s"No se ha detectado ningún comando")
