@@ -13,7 +13,7 @@ import java.util.UUID
 class CommandProcess(persistenceService: PersistenceService, telegramClient: TelegramClient) {
 
   //  START COMMAND //
-  def startCommand(result: Update): IO[Unit] = {
+  def startCommandMessage(result: Update): IO[Unit] = {
     for {
       _ <- persistenceService.addUser(result.message.chat.id, 22, 6, true)
       _ <- telegramClient
@@ -22,6 +22,20 @@ class CommandProcess(persistenceService: PersistenceService, telegramClient: Tel
           "Se ha configurado por defecto que se acuesta a las 22:00, se levanta a las 06:00 y que desea cargar dispositivos durante la noche. Para conocer qué más puedo hacer escriba /help"
         )
     } yield ()
+  }
+
+  def startCommand(result: Update) = {
+    val userUUID = persistenceService.getUserUUID(result.message.chat.id)
+    if (userUUID == null) {
+      startCommandMessage(result: Update)
+    } else {
+      telegramClient
+        .sendMessage(
+          result.message.chat.id,
+          s"Ya posee una cuenta"
+        )
+        .void
+    }
   }
 
   //  CHECK SETTING COMMAND //
@@ -57,21 +71,30 @@ class CommandProcess(persistenceService: PersistenceService, telegramClient: Tel
     data match {
       case sleepingTime :: wakeUpTime :: nightCharge :: Nil
           if sleepingTime.toIntOption.nonEmpty && wakeUpTime.toIntOption.nonEmpty && nightCharge.toBooleanOption.nonEmpty =>
-        for {
-          userUUID <- persistenceService.getUserUUID(result.message.chat.id)
-          _ <- persistenceService
-            .updateUserSettings(
-              userUUID,
-              sleepingTime.toInt,
-              wakeUpTime.toInt,
-              nightCharge.toBoolean
-            )
-          _ <- telegramClient
+        if (sleepingTime.toInt >= 0 && sleepingTime.toInt <= 23 && wakeUpTime.toInt >= 0 && wakeUpTime.toInt <= 23) {
+          for {
+            userUUID <- persistenceService.getUserUUID(result.message.chat.id)
+            _ <- persistenceService
+              .updateUserSettings(
+                userUUID,
+                sleepingTime.toInt,
+                wakeUpTime.toInt,
+                nightCharge.toBoolean
+              )
+            _ <- telegramClient
+              .sendMessage(
+                result.message.chat.id,
+                "El usuario ha sido actualizado"
+              )
+          } yield ()
+        } else {
+          telegramClient
             .sendMessage(
               result.message.chat.id,
-              "El usuario ha sido actualizado"
+              "Introduzca unas horas válidas"
             )
-        } yield ()
+            .void
+        }
       case _ =>
         for {
           _ <- telegramClient
@@ -96,14 +119,30 @@ class CommandProcess(persistenceService: PersistenceService, telegramClient: Tel
           .void
       case deviceName :: chargingTime :: Nil
           if chargingTime.toDoubleOption.nonEmpty && !devicesList.contains(deviceName) =>
-        for {
-          _ <- persistenceService.addDevice(userUUID, deviceName, chargingTime.toDouble)
-          _ <- telegramClient
+        if (chargingTime.toDouble > 12.0) {
+          telegramClient
             .sendMessage(
               result.message.chat.id,
-              "El dispositivo se ha guardado correctamente."
+              "Este bot no admite dispositivos que tarden tanto tiempo en completarse."
             )
-        } yield ()
+            .void
+        } else if (chargingTime.toDouble < 0) {
+          telegramClient
+            .sendMessage(
+              result.message.chat.id,
+              "No te admito ese dispositivo porque en este bot se siguen las leyes de la termodinámica."
+            )
+            .void
+        } else {
+          for {
+            _ <- persistenceService.addDevice(userUUID, deviceName, chargingTime.toDouble)
+            _ <- telegramClient
+              .sendMessage(
+                result.message.chat.id,
+                "El dispositivo se ha guardado correctamente."
+              )
+          } yield ()
+        }
       case _ =>
         telegramClient
           .sendMessage(
@@ -128,19 +167,35 @@ class CommandProcess(persistenceService: PersistenceService, telegramClient: Tel
     data match {
       case deviceName :: chargingTime :: Nil
           if chargingTime.toDoubleOption.nonEmpty && deviceName.nonEmpty && devicesList.contains(deviceName) =>
-        for {
-          _ <- persistenceService
-            .updateDeviceSettings(
-              deviceName,
-              chargingTime.toDouble,
-              userUUID
-            )
-          _ <- telegramClient
+        if (chargingTime.toDouble > 12.0) {
+          telegramClient
             .sendMessage(
               result.message.chat.id,
-              "El dispositivo ha sido actualizado"
+              "Este bot no admite dispositivos que tarden tanto tiempo en completarse."
             )
-        } yield ()
+            .void
+        } else if (chargingTime.toDouble <= 0) {
+          telegramClient
+            .sendMessage(
+              result.message.chat.id,
+              "No te admito ese dispositivo porque en este bot se siguen las leyes de la termodinámica."
+            )
+            .void
+        } else {
+          for {
+            _ <- persistenceService
+              .updateDeviceSettings(
+                deviceName,
+                chargingTime.toDouble,
+                userUUID
+              )
+            _ <- telegramClient
+              .sendMessage(
+                result.message.chat.id,
+                "El dispositivo ha sido actualizado"
+              )
+          } yield ()
+        }
       case deviceName :: chargingTime :: Nil if !devicesList.contains(deviceName) && devicesList.nonEmpty =>
         telegramClient
           .sendMessage(
@@ -174,15 +229,27 @@ class CommandProcess(persistenceService: PersistenceService, telegramClient: Tel
   }
 
   // CHECK DEVICES COMMAND
+  def checkDevicesCommandMessage(result: Update, devicesList: List[String]): IO[Unit] ={
+    if (devicesList.isEmpty) {
+      telegramClient
+        .sendMessage(
+          result.message.chat.id,
+          s"No tiene guardado ningún dispositivo, use el comando /help para aprender a añadir uno"
+        ).void
+    } else {
+      telegramClient
+        .sendMessage(
+          result.message.chat.id,
+          s"Dispone de los siguientes dispositivos: \n ${devicesList.mkString("\n")}"
+        ).void
+    }
+  }
+
   def checkDevicesCommand(result: Update): IO[Unit] = {
     for {
       userUUID    <- persistenceService.getUserUUID(result.message.chat.id)
       devicesList <- persistenceService.getUserDevicesName(userUUID)
-      _ <- telegramClient
-        .sendMessage(
-          result.message.chat.id,
-          s"Dispone de los siguientes dispositivos: \n ${devicesList.mkString("\n")}"
-        )
+      _<- checkDevicesCommandMessage(result, devicesList)
     } yield ()
   }
 
