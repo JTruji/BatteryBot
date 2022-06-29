@@ -39,11 +39,11 @@ object Main extends IOApp {
     val scraperProcess = new ScraperProcess(persistenceService)
 
     def process(telegramClient: TelegramClient) = {
-      val commandProcess = new CommandProcess(persistenceService, telegramClient)
+      val commandProcess   = new CommandProcess(persistenceService, telegramClient)
+      val streamingProcess = new StreamingProcess(telegramClient, commandProcess)
       for {
-        _    <- scraperProcess.getNewPrices
-        json <- telegramClient.telegramGetUpdate
-        _    <- commandProcess.interpreter(json.result)
+        _ <- scraperProcess.getNewPrices
+        _ <- streamingProcess.process.compile.drain
       } yield ExitCode.Success
     }
 
