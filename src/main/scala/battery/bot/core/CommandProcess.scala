@@ -229,19 +229,21 @@ class CommandProcess(persistenceService: PersistenceService, telegramClient: Tel
   }
 
   // CHECK DEVICES COMMAND
-  def checkDevicesCommandMessage(result: Update, devicesList: List[String]): IO[Unit] ={
+  def checkDevicesCommandMessage(result: Update, devicesList: List[String]): IO[Unit] = {
     if (devicesList.isEmpty) {
       telegramClient
         .sendMessage(
           result.message.chat.id,
           s"No tiene guardado ningún dispositivo, use el comando /help para aprender a añadir uno"
-        ).void
+        )
+        .void
     } else {
       telegramClient
         .sendMessage(
           result.message.chat.id,
           s"Dispone de los siguientes dispositivos: \n ${devicesList.mkString("\n")}"
-        ).void
+        )
+        .void
     }
   }
 
@@ -249,7 +251,7 @@ class CommandProcess(persistenceService: PersistenceService, telegramClient: Tel
     for {
       userUUID    <- persistenceService.getUserUUID(result.message.chat.id)
       devicesList <- persistenceService.getUserDevicesName(userUUID)
-      _<- checkDevicesCommandMessage(result, devicesList)
+      _           <- checkDevicesCommandMessage(result, devicesList)
     } yield ()
   }
 
@@ -277,7 +279,7 @@ class CommandProcess(persistenceService: PersistenceService, telegramClient: Tel
         telegramClient
           .sendMessage(
             result.message.chat.id,
-            "El formato del comando no es el adecuado"
+            "El formato del comando no es el adecuado, por favor siga el siguiente => /borrarDispositivo;[Nombre]"
           )
           .void
     }
