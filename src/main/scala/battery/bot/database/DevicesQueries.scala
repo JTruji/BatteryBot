@@ -18,11 +18,6 @@ object DevicesQueries {
     sql"""select name from devices where id_user = $userUUID"""
       .query[String]
 
-  // Get device chargingTime
-  def deviceChargingTime(userUUID: UUID, deviceName: String): doobie.Query0[Double] =
-    sql"""select charging_time from devices where id_user = $userUUID and name = $deviceName"""
-      .query[Double]
-
   // Delete device
   def deleteDevice(userId: UUID, name: String): doobie.Update0 =
     sql"""delete from devices where id_user = $userId and name = $name""".update
