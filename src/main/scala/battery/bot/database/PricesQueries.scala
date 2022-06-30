@@ -21,5 +21,5 @@ object PricesQueries {
   }
 
   def lowerPriceTime(price: BigDecimal, time: Instant): doobie.Query0[LocalDateTime] =
-    sql"""select time_range from prices where price = $price""".query[LocalDateTime]
+    sql"""select time_range from prices where price = $price limit 1""".query[LocalDateTime]
 }

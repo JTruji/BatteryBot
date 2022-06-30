@@ -23,8 +23,8 @@ object UsersQueries {
     sql"""update users set sleeping_time = $sleepingTime, wakeup_time = $wakeupTime, night_charge = $nightCharge where id_users = $userUUID""".update
 
   // Get user UUID
-  def getUserId(chatId: Long): doobie.Query0[UUID] =
-    sql"""select id_users from users where chat_id = $chatId""".query[UUID]
+  def getUserId(chatId: Long): doobie.Query0[Option[UUID]] =
+    sql"""select id_users from users where chat_id = $chatId""".query[Option[UUID]]
 
   // Get user settings
   def getSettings(userUUID: UUID): doobie.Query0[UserSettings] =
