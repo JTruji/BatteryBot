@@ -4,4 +4,4 @@ case class From(
     id: Long,
     isBot: Boolean,
     firstName: String
-  )
+)

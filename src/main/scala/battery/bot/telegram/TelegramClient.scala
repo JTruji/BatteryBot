@@ -5,10 +5,10 @@ import cats.effect.IO
 import org.http4s.circe.CirceEntityCodec._
 import org.http4s.client.Client
 import org.http4s.implicits._
-import org.http4s.{Method, Request}
+import org.http4s.{Method, Request, Uri}
 
 class TelegramClient(client: Client[IO], telegramToken: String) {
-  val telegramUri = uri"https://api.telegram.org" / s"bot$telegramToken"
+  val telegramUri: Uri = uri"https://api.telegram.org" / s"bot$telegramToken"
 
   def telegramGetMe: IO[TelegramResult[TelegramUpdate]] = {
     client
@@ -21,8 +21,8 @@ class TelegramClient(client: Client[IO], telegramToken: String) {
   def telegramGetUpdate: IO[TelegramResult[TelegramUpdate]] = {
     client
       .expect[TelegramResult[TelegramUpdate]](
-        telegramUri / "getUpdates"
-      )
+        (telegramUri / """getUpdates"""
+      ).withQueryParam("allowed_updates","""["message"]"""))
       .flatTap(hj => IO(println(hj)))
   }
 
@@ -50,7 +50,7 @@ class TelegramClient(client: Client[IO], telegramToken: String) {
       .flatTap(hj => IO(println(hj)))
   }
 
-  def sendMessage(chatId: Long, text: String) = {
+  def sendMessage(chatId: Long, text: String): IO[Unit] = {
     client
       .successful(
         Request[IO](
@@ -61,6 +61,5 @@ class TelegramClient(client: Client[IO], telegramToken: String) {
         )
       )
       .void
-      .flatTap(hj => IO(println(s"sendMessage: $hj")))
   }
 }
