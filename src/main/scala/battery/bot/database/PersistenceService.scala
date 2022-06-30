@@ -32,7 +32,7 @@ class PersistenceService(ta: Transactor[IO]) {
   def updateDeviceSettings(name: String, chargingTime: Double, userUUID: UUID): IO[Int] =
     updateChargingTime(name, chargingTime, userUUID).run.transact(ta)
 
-  def getUserUUID(chatId: Long): IO[Option[UUID]] =
+  def getUserUUID(chatId: Long): IO[UUID] =
     getUserId(chatId).unique.transact(ta)
 
   def getUserSetting(userUUID: UUID): IO[UserSettings] =
@@ -60,6 +60,6 @@ class PersistenceService(ta: Transactor[IO]) {
   def updateTelegramUpdate(updateID: Long): IO[Int] =
     updateUpdateID(updateID, Instant.now()).run.transact(ta)
 
-  def getLastUpdateId =
+  def getLastUpdateId: IO[Long] =
     getUpdateID.unique.transact(ta)
 }
